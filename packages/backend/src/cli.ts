@@ -6,6 +6,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { spawnSync } from 'child_process';
+import dotenv from 'dotenv';
 import { detectPackageManager } from '@mindfiredigital/utils';
 import { loadConfig } from './config-loader';
 
@@ -172,6 +173,7 @@ const initMonodogEnvironment = (rootDir: string): void => {
 const run = async () => {
   // Auto-initialize config and .env if missing
   initMonodogEnvironment(rootPath);
+  dotenv.config({ path: path.join(rootPath, '.env'), override: true });
 
   const dbAbsolutePath = path.resolve(rootPath, 'monodog.db');
   const dbUrl = `file:${dbAbsolutePath}`;
@@ -180,7 +182,28 @@ const run = async () => {
 
   // Ensure Prisma client is generated and DB tables are created before starting server
   try {
-    const schemaPath = path.resolve(__dirname, '..', 'prisma', 'schema.prisma');
+    const schemaCandidates = [
+      path.resolve(__dirname, '..', 'prisma', 'schema.prisma'),
+      path.resolve(
+        __dirname,
+        '..',
+        '..',
+        '..',
+        '..',
+        'prisma',
+        'schema.prisma'
+      ),
+      path.resolve(process.cwd(), 'prisma', 'schema.prisma'),
+      path.resolve(
+        process.cwd(),
+        'packages',
+        'backend',
+        'prisma',
+        'schema.prisma'
+      ),
+    ];
+    const schemaPath =
+      schemaCandidates.find(p => fs.existsSync(p)) || schemaCandidates[0];
     if (fs.existsSync(schemaPath)) {
       console.log('[monodog] Generating Prisma client...');
       const detectedPM = detectPackageManager(rootPath);
@@ -203,29 +226,22 @@ const run = async () => {
           cmdArgs = ['prisma', action, ...extraArgs];
         }
 
-        const res = spawnSync(cmd, cmdArgs, { stdio: 'inherit', env: envObj });
+        const res = spawnSync(cmd, cmdArgs, { stdio: 'ignore', env: envObj });
         if (res.status !== 0 && cmd !== 'npx') {
           spawnSync('npx', ['prisma', action, ...extraArgs], {
-            stdio: 'inherit',
+            stdio: 'ignore',
             env: envObj,
           });
         }
       };
 
       runPrisma('generate', [`--schema=${schemaPath}`]);
-      console.log('[monodog] Ensuring SQLite database schema is up to date...');
       runPrisma('db', ['push', `--schema=${schemaPath}`, '--skip-generate']);
-    } else {
-      console.warn(
-        `[monodog] Warning: Prisma schema not found at ${schemaPath}`
-      );
+      console.log('[monodog] Database setup complete.');
     }
   } catch (err) {
     console.error('[monodog] Warning: Database setup step failed or skipped.');
   }
-
-  console.log(`Starting Monodog API server...`);
-  console.log(`Analyzing monorepo at root: ${rootPath}`);
 
   // Lazy loaded imports!
   const { startServer, serveDashboard } = await import('./index.js');
