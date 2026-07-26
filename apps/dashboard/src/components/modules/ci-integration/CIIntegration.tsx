@@ -340,7 +340,9 @@ export default function CIIntegration() {
       {/* Main Content */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Build List */}
-        <div className="lg:col-span-2">
+        <div
+          className={pipelines.length > 0 ? 'lg:col-span-2' : 'lg:col-span-3'}
+        >
           <BuildList
             builds={filteredBuilds}
             selectedBuild={selectedBuild}
@@ -351,13 +353,15 @@ export default function CIIntegration() {
         </div>
 
         {/* Pipeline Status */}
-        <div className="lg:col-span-1">
-          <PipelineStatus
-            pipelines={pipelines}
-            onPipelineSelect={handlePipelineSelect}
-            onPipelineToggle={handlePipelineToggle}
-          />
-        </div>
+        {pipelines.length > 0 && (
+          <div className="lg:col-span-1">
+            <PipelineStatus
+              pipelines={pipelines}
+              onPipelineSelect={handlePipelineSelect}
+              onPipelineToggle={handlePipelineToggle}
+            />
+          </div>
+        )}
       </div>
 
       {/* Build Details Modal */}
@@ -399,29 +403,6 @@ export default function CIIntegration() {
           >
             Clear Filters
           </button>
-        </div>
-      )}
-
-      {/* No Data State */}
-      {builds.length === 0 && !loading && (
-        <div className="text-center py-12">
-          <div className="text-gray-400 text-6xl mb-4">
-            <RocketLaunchIcon className="w-6 h-6 text-primary-600" />
-          </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
-            No CI/CD data available
-          </h3>
-          <p className="text-gray-600 mb-4">
-            Get started by triggering your first build.
-          </p>
-          <div className="flex justify-center space-x-4">
-            <button
-              onClick={() => setIsTriggerModalOpen(true)}
-              className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
-            >
-              Trigger Build
-            </button>
-          </div>
         </div>
       )}
     </div>

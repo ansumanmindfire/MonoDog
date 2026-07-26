@@ -520,18 +520,18 @@ export default function HealthStatus() {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span
                       className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(
-                        pkg.health.overallScore >= 80
-                          ? 'up-to-date'
-                          : pkg.health.overallScore >= 60
-                            ? 'outdated'
-                            : 'vulnerable'
+                        pkg.health.securityAudit === 'fail'
+                          ? 'vulnerable'
+                          : pkg.health.securityAudit === 'pass'
+                            ? 'up-to-date'
+                            : 'unknown'
                       )}`}
                     >
-                      {pkg.health.overallScore >= 80
-                        ? 'up-to-date'
-                        : pkg.health.overallScore >= 60
-                          ? 'outdated'
-                          : 'vulnerable'}
+                      {pkg.health.securityAudit === 'fail'
+                        ? 'vulnerable'
+                        : pkg.health.securityAudit === 'pass'
+                          ? 'up-to-date'
+                          : 'unknown'}
                     </span>
                   </td>
 
