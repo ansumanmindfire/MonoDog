@@ -6,6 +6,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { spawnSync } from 'child_process';
+import { detectPackageManager } from '@mindfiredigital/utils';
 import { loadConfig } from './config-loader';
 
 const appConfig = loadConfig();
@@ -83,14 +84,13 @@ const createConfigFileIfMissing = (rootPath: string): void => {
   const defaultContent = {
     workspace: {
       root_dir: './',
-      install_path: 'packages',
     },
     database: {
       path: './monodog.db',
     },
     dashboard: {
       host: '0.0.0.0',
-      port: '3010',
+      port: 3010,
     },
     server: {
       host: '0.0.0.0',
@@ -126,9 +126,11 @@ const initMonodogEnvironment = (rootDir: string): void => {
   // Generate config file in workspace root
   createConfigFileIfMissing(rootDir);
 
+  const dbAbsolutePath = path.resolve(rootDir, 'monodog.db');
+
   // Default configuration keys to ensure exist in .env
   const defaultEnvEntries: Record<string, string> = {
-    DATABASE_URL: '"file:./monodog.db"',
+    DATABASE_URL: `"file:${dbAbsolutePath}"`,
     GITHUB_CLIENT_ID: 'your_github_client_id_here',
     GITHUB_CLIENT_SECRET: 'your_github_client_secret_here',
     GITHUB_REDIRECT_URI: 'http://localhost:3010/auth/callback',
@@ -170,6 +172,57 @@ const initMonodogEnvironment = (rootDir: string): void => {
 const run = async () => {
   // Auto-initialize config and .env if missing
   initMonodogEnvironment(rootPath);
+
+  const dbAbsolutePath = path.resolve(rootPath, 'monodog.db');
+  const dbUrl = `file:${dbAbsolutePath}`;
+  process.env.DATABASE_URL = process.env.DATABASE_URL || dbUrl;
+  process.env.MONODOG_TARGET_ROOT = process.env.MONODOG_TARGET_ROOT || rootPath;
+
+  // Ensure Prisma client is generated and DB tables are created before starting server
+  try {
+    const schemaPath = path.resolve(__dirname, '..', 'prisma', 'schema.prisma');
+    if (fs.existsSync(schemaPath)) {
+      console.log('[monodog] Generating Prisma client...');
+      const detectedPM = detectPackageManager(rootPath);
+      const runPrisma = (action: string, extraArgs: string[]) => {
+        const envObj = {
+          ...process.env,
+          DATABASE_URL: process.env.DATABASE_URL,
+        };
+        let cmd = 'npx';
+        let cmdArgs = ['prisma', action, ...extraArgs];
+
+        if (detectedPM === 'pnpm') {
+          cmd = 'pnpm';
+          cmdArgs = ['exec', 'prisma', action, ...extraArgs];
+        } else if (detectedPM === 'bun') {
+          cmd = 'bunx';
+          cmdArgs = ['prisma', action, ...extraArgs];
+        } else if (detectedPM === 'yarn') {
+          cmd = 'yarn';
+          cmdArgs = ['prisma', action, ...extraArgs];
+        }
+
+        const res = spawnSync(cmd, cmdArgs, { stdio: 'inherit', env: envObj });
+        if (res.status !== 0 && cmd !== 'npx') {
+          spawnSync('npx', ['prisma', action, ...extraArgs], {
+            stdio: 'inherit',
+            env: envObj,
+          });
+        }
+      };
+
+      runPrisma('generate', [`--schema=${schemaPath}`]);
+      console.log('[monodog] Ensuring SQLite database schema is up to date...');
+      runPrisma('db', ['push', `--schema=${schemaPath}`, '--skip-generate']);
+    } else {
+      console.warn(
+        `[monodog] Warning: Prisma schema not found at ${schemaPath}`
+      );
+    }
+  } catch (err) {
+    console.error('[monodog] Warning: Database setup step failed or skipped.');
+  }
 
   console.log(`Starting Monodog API server...`);
   console.log(`Analyzing monorepo at root: ${rootPath}`);
