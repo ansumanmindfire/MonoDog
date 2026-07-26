@@ -82,6 +82,12 @@ export const DASHBOARD_API_ENDPOINTS = {
     REFRESH: '/health/refresh',
   },
 
+  // Changelog & Commits endpoints
+  CHANGELOG: (packageName: string) =>
+    `/changelog/${encodeURIComponent(packageName)}`,
+  COMMITS: (packagePath: string) =>
+    `/commits/${encodeURIComponent(packagePath)}`,
+
   // Workflow endpoints (GitHub Actions management)
   WORKFLOWS: {
     LIST: (owner: string, repo: string) => `/workflows/${owner}/${repo}`,
