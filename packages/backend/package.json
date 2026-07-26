@@ -16,7 +16,7 @@
   ],
   "license": "MIT",
   "bin": {
-    "monodog": "dist/cli.js"
+    "monodog": "dist/packages/backend/src/cli.js"
   },
   "files": [
     "dist",
@@ -25,7 +25,7 @@
   "scripts": {
     "postinstall": "prisma generate --schema=./prisma/schema.prisma",
     "dev": "tsx src/run-db.ts tsx watch --exclude \"../../.changeset/**\" src/serve-dev.ts",
-    "start": "tsx index.ts",
+    "start": "node dist/packages/backend/src/cli.js",
     "prepublishOnly": "pnpm run build",
     "build": "tsc -p tsconfig.json",
     "prestart": "npm run build",
@@ -41,6 +41,8 @@
     "test:coverage": "vitest run --coverage --fileParallelism=false"
   },
   "dependencies": {
+    "@mindfiredigital/monorepo-scanner": "workspace:*",
+    "@mindfiredigital/utils": "workspace:*",
     "@prisma/client": "^5.7.0",
     "body-parser": "^1.20.2",
     "cookie-parser": "^1.4.7",
