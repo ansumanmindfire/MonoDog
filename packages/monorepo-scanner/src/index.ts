@@ -7,7 +7,7 @@ import {
   checkOutdatedDependencies,
   getPackageSize,
   PackageHealth,
-} from '@mindfiredigital/utils/helpers';
+} from '@mindfiredigital/utils';
 
 import { ScanResult, PackageReport } from './types';
 export { ScanResult, PackageReport };

@@ -8,8 +8,19 @@
     "strict": true,
     "skipLibCheck": true,
     "outDir": "./dist",
-    "rootDir": "./src",
-    "allowJs": true
+    "rootDir": "../../",
+    "baseUrl": "../../",
+    "allowJs": true,
+    "paths": {
+      "@mindfiredigital/utils": ["libs/utils/index.ts"],
+      "@mindfiredigital/monorepo-scanner": [
+        "packages/monorepo-scanner/src/index.ts"
+      ]
+    }
   },
-  "include": ["src/**/*"]
+  "include": [
+    "src/**/*",
+    "../../libs/utils/**/*",
+    "../../packages/monorepo-scanner/src/**/*"
+  ]
 }
