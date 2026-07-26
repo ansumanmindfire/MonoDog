@@ -3,6 +3,10 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   plugins: [react()],
+  build: {
+    outDir: '../../packages/backend/dist/dashboard',
+    emptyOutDir: true,
+  },
   test: {
     environment: 'jsdom',
     globals: true,

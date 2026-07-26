@@ -208,12 +208,6 @@ importers:
 
   packages/backend:
     dependencies:
-      '@mindfiredigital/monorepo-scanner':
-        specifier: 1.0.9
-        version: link:../monorepo-scanner
-      '@mindfiredigital/utils':
-        specifier: 1.0.2
-        version: link:../../libs/utils
       '@prisma/client':
         specifier: ^5.7.0
         version: 5.22.0(prisma@5.22.0)
@@ -300,7 +294,7 @@ importers:
   packages/monorepo-scanner:
     dependencies:
       '@mindfiredigital/utils':
-        specifier: 1.0.2
+        specifier: workspace:*
         version: link:../../libs/utils
       '@prisma/client':
         specifier: ^5.7.0
