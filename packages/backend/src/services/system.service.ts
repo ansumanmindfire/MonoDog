@@ -1,7 +1,4 @@
-import {
-  scanMonorepo,
-  generateMonorepoStats,
-} from '@mindfiredigital/utils/helpers';
+import { scanMonorepo, generateMonorepoStats } from '@mindfiredigital/utils';
 
 export const getSystemInformation = () => {
   return {
@@ -19,8 +16,10 @@ export const getSystemInformation = () => {
   };
 };
 
-export const getMonorepoStats = async () => {
-  const packages = await scanMonorepo(process.cwd());
+export const getMonorepoStats = async (targetRoot?: string) => {
+  const rootPath =
+    targetRoot || process.env.MONODOG_TARGET_ROOT || process.cwd();
+  const packages = await scanMonorepo(rootPath);
   const stats = generateMonorepoStats(packages);
 
   return {

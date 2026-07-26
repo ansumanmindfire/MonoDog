@@ -1,4 +1,4 @@
-import { PackageInfo, DependencyInfo } from '@mindfiredigital/utils/helpers';
+import { PackageInfo, DependencyInfo } from '@mindfiredigital/utils';
 // import dotenv from 'dotenv';
 import path from 'path';
 // dotenv.config({ path: path.resolve(__dirname, '../.env') });

@@ -19,7 +19,7 @@ export const generateGithubAuthUrl = () => {
   const clientId = process.env.GITHUB_CLIENT_ID || 'your-github-client-id';
 
   const redirectUri =
-    process.env.GITHUB_REDIRECT_URI || 'http://localhost:5173/auth/callback';
+    process.env.GITHUB_REDIRECT_URI || 'http://localhost:3010/auth/callback';
 
   const scope = 'user:email read:user repo workflow';
 

@@ -1,6 +1,6 @@
 import path from 'path';
 import { prisma } from '../db/prisma';
-import { calculatePackageHealth } from '@mindfiredigital/utils/helpers';
+import { calculatePackageHealth } from '@mindfiredigital/utils';
 import { scanMonorepo } from '../utils/utilities';
 import {
   funCheckBuildStatus,
@@ -22,8 +22,13 @@ export const getSystemHealth = () => {
     },
   };
 };
-export const getPackageHealthMetrics = async (name: string) => {
-  const packages = await scanMonorepo(process.cwd());
+export const getPackageHealthMetrics = async (
+  name: string,
+  targetRoot?: string
+) => {
+  const rootPath =
+    targetRoot || process.env.MONODOG_TARGET_ROOT || process.cwd();
+  const packages = await scanMonorepo(rootPath);
 
   const pkg = packages.find(p => p.name === name);
 
