@@ -98,54 +98,81 @@ export default function PackageDetailHeader({
         </div>
 
         {/* Package Metadata */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6 pt-6 border-t border-gray-200">
-          <div className="flex items-center space-x-2">
-            <CalendarIcon className="h-4 w-4 text-gray-400" />
-            <div>
-              <div className="text-xs text-gray-500">Last Updated</div>
-              <div className="text-sm font-medium">
-                {formatDate(packageData.lastUpdated)}
-              </div>
-            </div>
-          </div>
+        {(() => {
+          let rawUrl = '';
+          const repo = packageData.repository;
+          if (typeof repo === 'string') {
+            try {
+              const parsed = JSON.parse(repo);
+              rawUrl = parsed.url || repo;
+            } catch {
+              rawUrl = repo;
+            }
+          } else if (repo && repo.url) {
+            rawUrl = repo.url;
+          }
 
-          <div className="hidden flex items-center space-x-2">
-            <UserIcon className="h-4 w-4 text-gray-400" />
-            <div>
-              <div className="text-xs text-gray-500">Maintainers</div>
-              <div className="text-sm font-medium">
-                {packageData.maintainers.length}
-              </div>
-            </div>
-          </div>
+          let cleanUrl = '';
+          if (rawUrl) {
+            cleanUrl = rawUrl
+              .replace(/^git\+/, '')
+              .replace(/^git:\/\//, 'https://')
+              .replace(/\.git$/, '');
+            if (
+              !cleanUrl.startsWith('http://') &&
+              !cleanUrl.startsWith('https://')
+            ) {
+              cleanUrl = `https://${cleanUrl.replace(/^github\.com\/?/, 'github.com/')}`;
+            }
+          }
 
-          <div className="flex items-center space-x-2">
-            <TagIcon className="h-4 w-4 text-gray-400" />
-            <div>
-              <div className="text-xs text-gray-500">License</div>
-              <div className="text-sm font-medium">{packageData.license}</div>
-            </div>
-          </div>
+          const repoName = cleanUrl
+            ? cleanUrl.split('/').pop() || 'Repository'
+            : '';
 
-          <div className="flex items-center space-x-2">
-            <div className="h-4 w-4 text-gray-400">
-              <LinkIcon className="h-4 w-4 text-gray-400"></LinkIcon>
-            </div>
-            <div>
-              <div className="text-xs text-gray-500">Repository</div>
-              <div className="text-sm font-medium truncate">
-                <a
-                  href={packageData.repository.url || ''}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-600 hover:text-blue-500"
-                >
-                  {packageData.repository?.url?.split('/').pop()}
-                </a>
+          return (
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6 pt-6 border-t border-gray-200">
+              <div className="flex items-center space-x-2">
+                <CalendarIcon className="h-4 w-4 text-gray-400" />
+                <div>
+                  <div className="text-xs text-gray-500">Last Updated</div>
+                  <div className="text-sm font-medium">
+                    {formatDate(packageData.lastUpdated)}
+                  </div>
+                </div>
               </div>
+
+              <div className="flex items-center space-x-2">
+                <TagIcon className="h-4 w-4 text-gray-400" />
+                <div>
+                  <div className="text-xs text-gray-500">License</div>
+                  <div className="text-sm font-medium">
+                    {packageData.license}
+                  </div>
+                </div>
+              </div>
+
+              {cleanUrl && (
+                <div className="flex items-center space-x-2">
+                  <LinkIcon className="h-4 w-4 text-gray-400" />
+                  <div>
+                    <div className="text-xs text-gray-500">Repository</div>
+                    <div className="text-sm font-medium truncate">
+                      <a
+                        href={cleanUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:text-blue-500 hover:underline inline-flex items-center gap-1"
+                      >
+                        {repoName} ↗
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
-          </div>
-        </div>
+          );
+        })()}
 
         {/* Tags */}
         {packageData.tags?.length > 0 && (
