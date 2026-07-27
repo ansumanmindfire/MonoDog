@@ -6,7 +6,6 @@ export interface MonodogConfig {
   workspace: {
     globs: string[];
     root_dir: string;
-    install_path: string;
   };
   database: {
     type: 'postgres' | 'mysql' | 'sqlite';

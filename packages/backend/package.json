@@ -1,6 +1,6 @@
 {
   "name": "@mindfiredigital/monodog",
-  "version": "1.7.0",
+  "version": "1.8.0",
   "description": "Backend API server for monodog monorepo dashboard",
   "keywords": [
     "monodog",
@@ -16,7 +16,7 @@
   ],
   "license": "MIT",
   "bin": {
-    "monodog": "dist/cli.js"
+    "monodog": "dist/packages/backend/src/cli.js"
   },
   "files": [
     "dist",
@@ -24,9 +24,9 @@
   ],
   "scripts": {
     "dev": "tsx src/run-db.ts tsx watch --exclude \"../../.changeset/**\" src/serve-dev.ts",
-    "start": "tsx index.ts",
+    "start": "node dist/packages/backend/src/cli.js",
     "prepublishOnly": "pnpm run build",
-    "build": "rimraf dist && tsc -p tsconfig.json && node scripts/copy-dashboard.js",
+    "build": "tsc -p tsconfig.json",
     "prestart": "npm run build",
     "cli": "pnpm run build && node dist/cli.js",
     "clean": "rimraf dist node_modules/.cache",
@@ -40,8 +40,6 @@
     "test:coverage": "vitest run --coverage --fileParallelism=false"
   },
   "dependencies": {
-    "@mindfiredigital/monorepo-scanner": "1.0.11",
-    "@mindfiredigital/utils": "1.0.3",
     "@prisma/client": "^5.7.0",
     "body-parser": "^1.20.2",
     "cookie-parser": "^1.4.7",
@@ -57,6 +55,9 @@
     "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
+    "@mindfiredigital/monodog-dashboard": "workspace:*",
+    "@mindfiredigital/monorepo-scanner": "workspace:*",
+    "@mindfiredigital/utils": "workspace:*",
     "@types/body-parser": "^1.19.5",
     "@types/cookie-parser": "^1.4.10",
     "@types/cors": "^2.8.17",

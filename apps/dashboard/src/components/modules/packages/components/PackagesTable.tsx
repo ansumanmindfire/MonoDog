@@ -69,15 +69,6 @@ export default function PackagesTable({
                   {getSortIcon('dependencies')}
                 </div>
               </th>
-              <th
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                onClick={() => handleSort('lastUpdated')}
-              >
-                <div className="flex items-center space-x-1">
-                  <span>Last Updated</span>
-                  {getSortIcon('lastUpdated')}
-                </div>
-              </th>
               <th className="hidden px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Maintainers
               </th>
@@ -131,9 +122,6 @@ export default function PackagesTable({
                         ` +${Object.keys(pkg.dependencies).length - 3} more`}
                     </div>
                   )}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {formatDate(pkg.lastUpdated)}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex -space-x-1">

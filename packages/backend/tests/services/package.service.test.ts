@@ -3,7 +3,7 @@ import {
   getAllPackages,
   getPackageByName,
 } from '../../src/services/package.service';
-import { scanMonorepo } from '@mindfiredigital/utils/helpers';
+import { scanMonorepo } from '@mindfiredigital/utils';
 import { prisma } from '../../src/db/prisma';
 
 vi.mock('../../src/db/prisma', () => ({
@@ -19,7 +19,7 @@ vi.mock('../../src/utils/helpers', () => ({
   storePackage: vi.fn(),
 }));
 
-vi.mock('@mindfiredigital/utils/helpers', () => ({
+vi.mock('@mindfiredigital/utils', () => ({
   scanMonorepo: vi.fn(),
 }));
 

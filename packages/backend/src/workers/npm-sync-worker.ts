@@ -2,7 +2,7 @@ import { prisma } from '../db/prisma';
 import {
   scanMonorepo,
   checkOutdatedDependencies,
-} from '@mindfiredigital/utils/helpers';
+} from '@mindfiredigital/utils';
 import path from 'path';
 
 let syncInterval: NodeJS.Timeout | null = null;

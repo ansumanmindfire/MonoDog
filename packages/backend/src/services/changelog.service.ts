@@ -2,10 +2,6 @@ import fs from 'fs/promises';
 import path from 'path';
 import { AppLogger } from '../middleware/logger';
 import { ReleaseData } from '../types/changelog.types';
-import { getPrismaClient } from '../repositories';
-import { Commit } from '../types/database';
-
-const prisma = getPrismaClient();
 
 // In-memory cache for parsed changelogs
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 min
@@ -36,13 +32,21 @@ async function parseChangelog(packagePath: string): Promise<ReleaseData[]> {
 
     for (let i = 1; i < versionBlocks.length; i += 3) {
       const version = versionBlocks[i];
-      const dateString = versionBlocks[i + 1]?.trim() || null;
+      const headerDateCandidate = versionBlocks[i + 1]?.trim() || '';
+      const isValidHeaderDate =
+        Boolean(headerDateCandidate) &&
+        !isNaN(new Date(headerDateCandidate).getTime());
+
+      const dateString = isValidHeaderDate
+        ? new Date(headerDateCandidate).toISOString()
+        : null;
+
       const body = versionBlocks[i + 2]?.trim() || '';
 
       entries.push({
         version,
         date: dateString,
-        author: 'system',
+        author: '',
         markdownBody: body,
         source: 'changelog',
         commits: [],
@@ -92,7 +96,7 @@ async function fetchGitHubReleases(
     const releases = data.map((release: any) => ({
       version: release.tag_name.replace(/^v/, ''),
       date: release.published_at,
-      author: release.author?.login || 'Unknown',
+      author: release.author?.login || '',
       markdownBody: release.body || '',
       source: 'github',
       commits: [],
@@ -107,36 +111,4 @@ async function fetchGitHubReleases(
   }
 }
 
-// fetch commits from DB using date
-async function getVersionCommits(
-  packageName: string,
-  startDate: Date | null,
-  endDate: Date
-): Promise<any[]> {
-  try {
-    const commits = await prisma.commit.findMany({
-      where: {
-        packageName: packageName,
-        date: {
-          lte: endDate,
-          ...(startDate && { gt: startDate }),
-        },
-      },
-      orderBy: {
-        date: 'desc',
-      },
-    });
-
-    return commits.map((c: Commit) => ({
-      hash: c.hash,
-      message: c.message,
-      author: c.author,
-      date: c.date?.toISOString() || '',
-    }));
-  } catch (error) {
-    AppLogger.error(`Failed to fetch commits for ${packageName}: ${error}`);
-    return [];
-  }
-}
-
-export { parseChangelog, fetchGitHubReleases, getVersionCommits };
+export { parseChangelog, fetchGitHubReleases };

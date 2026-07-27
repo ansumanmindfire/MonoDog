@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { scanMonorepo } from '@mindfiredigital/utils/helpers';
+import { scanMonorepo } from '@mindfiredigital/utils';
 
 export async function scanForFileTypes(
   rootDir: string,

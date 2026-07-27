@@ -7,7 +7,9 @@ import {
   PackageHealth,
   checkOutdatedDependencies,
   calculatePackageHealth,
-} from '@mindfiredigital/utils/helpers';
+  detectPackageManager,
+  getPMCommands,
+} from '@mindfiredigital/utils';
 
 const execAsync = util.promisify(exec);
 
@@ -16,7 +18,9 @@ export async function checkBuildStatus(
 ): Promise<PackageHealth['buildStatus']> {
   try {
     if (pkg.scripts && pkg.scripts.build) {
-      await execAsync('pnpm run build', {
+      const pm = detectPackageManager(pkg.path);
+      const cmds = getPMCommands(pm);
+      await execAsync(cmds.runBuild, {
         cwd: pkg.path,
         timeout: 30000,
       });
@@ -84,7 +88,9 @@ export async function checkLintStatus(
 ): Promise<PackageHealth['lintStatus']> {
   try {
     if (pkg.scripts && pkg.scripts.lint) {
-      await execAsync('pnpm run lint', {
+      const pm = detectPackageManager(pkg.path);
+      const cmds = getPMCommands(pm);
+      await execAsync(cmds.runLint, {
         cwd: pkg.path,
         timeout: 10000,
       });
@@ -100,19 +106,26 @@ export async function checkSecurityAudit(
   pkg: PackageInfo
 ): Promise<PackageHealth['securityAudit']> {
   try {
-    let stdoutData;
+    let stdoutData = '';
+    const pm = detectPackageManager(pkg.path);
+    const cmds = getPMCommands(pm);
+
     try {
-      const { stdout } = await execAsync('pnpm audit --json', {
+      const { stdout } = await execAsync(cmds.auditJson, {
         cwd: pkg.path,
-        timeout: 30000,
+        timeout: 60000,
       });
       stdoutData = stdout;
     } catch (execError: any) {
       if (execError.stdout) {
         stdoutData = execError.stdout;
       } else {
-        throw execError;
+        return 'unknown';
       }
+    }
+
+    if (!stdoutData || !stdoutData.trim()) {
+      return 'unknown';
     }
 
     const audit = JSON.parse(stdoutData.toString());

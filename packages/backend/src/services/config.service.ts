@@ -5,40 +5,8 @@ import path from 'path';
  * Find the monorepo root by looking for package.json with workspaces or pnpm-workspace.yaml
  */
 export function findMonorepoRoot(providedRoot?: string): string {
-  let currentDir = providedRoot || process.cwd();
-
-  while (currentDir !== path.parse(currentDir).root) {
-    const packageJsonPath = path.join(currentDir, 'package.json');
-    const pnpmWorkspacePath = path.join(currentDir, 'pnpm-workspace.yaml');
-
-    // Check if this directory has package.json with workspaces or pnpm-workspace.yaml
-    if (fs.existsSync(packageJsonPath)) {
-      try {
-        const packageJson = JSON.parse(
-          fs.readFileSync(packageJsonPath, 'utf8')
-        );
-        // If it has workspaces or is the root monorepo package
-        if (packageJson.workspaces || fs.existsSync(pnpmWorkspacePath)) {
-          return currentDir;
-        }
-      } catch (error) {
-        // Continue searching if package.json is invalid
-      }
-    }
-
-    // Check if we're at the git root
-    const gitPath = path.join(currentDir, '.git');
-    if (fs.existsSync(gitPath)) {
-      return currentDir;
-    }
-
-    // Go up one directory
-    const parentDir = path.dirname(currentDir);
-    if (parentDir === currentDir) break; // Prevent infinite loop
-    currentDir = parentDir;
-  }
-
-  return process.cwd();
+  const root = providedRoot || process.env.MONODOG_TARGET_ROOT || process.cwd();
+  return path.resolve(root);
 }
 
 export function getFileType(filename: string): string {
@@ -97,6 +65,10 @@ export async function scanConfigFiles(rootDir: string): Promise<any[]> {
     'package.json',
     'pnpm-workspace.yaml',
     'pnpm-lock.yaml',
+    'package-lock.json',
+    'yarn.lock',
+    'bun.lockb',
+    'bun.lock',
     'turbo.json',
     'tsconfig.json',
     '.eslintrc.*',

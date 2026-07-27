@@ -37,16 +37,11 @@ export function startServer(
   // Store rootPath for routes to access
   app.locals.rootPath = rootPath;
 
-  // Logging Middleware
-  app.use((_req: Request, _res: Response, next: NextFunction) => {
-    console.log(`[SERVER] ${_req.method} ${_req.url} (Root: ${rootPath})`);
-    next();
-  });
-
   // CORS configuration - allow credentials with specific origins
   const allowedOrigins = process.env.CORS_ORIGINS
     ? process.env.CORS_ORIGINS.split(',')
     : [
+        'http://localhost:3010',
         'http://localhost:5173',
         'http://localhost:3000',
         'http://localhost:4173',
@@ -115,14 +110,14 @@ export function startServer(
   const PORT = parseInt(port ? port.toString() : '4000');
 
   const server = app
-    .listen(PORT, host, async () => {
+    .listen(PORT, async () => {
       await refreshAllPackages(rootPath);
 
       const pcount = await prisma.package.count();
-      console.log(`[Database] Total packages found: ${pcount}`);
-
-      console.log(`Backend server running on http://${host}:${PORT}`);
-      console.log(`API endpoints available on /api`);
+      console.log(`[monodog] Total packages found: ${pcount}`);
+      console.log(
+        `🚀 Backend API Server running on: http://localhost:${PORT}/api`
+      );
 
       // Start background worker for scheduled releases & pipeline cleanup
       startScheduledReleaseWorker(rootPath);
@@ -178,8 +173,11 @@ export function serveDashboard(
   const app = express();
 
   const candidatePaths = [
+    path.resolve(__dirname, '../../..', 'dashboard'),
     path.resolve(__dirname, 'dashboard'),
     path.resolve(__dirname, '../../apps/dashboard/dist'),
+    path.resolve(process.cwd(), 'dist', 'dashboard'),
+    path.resolve(process.cwd(), 'packages', 'backend', 'dist', 'dashboard'),
   ];
 
   const staticPath = candidatePaths.find(p =>
@@ -197,7 +195,7 @@ export function serveDashboard(
   // in the build folder, will just serve index.html. Client side routing is
   // going to make sure that the correct content will be loaded.
   app.use((req, res, next) => {
-    if (/(.ico|.js|.css|.jpg|.png|.map)$/i.test(req.path)) {
+    if (/(.ico|.js|.css|.jpg|.png|.svg|.json|.map)$/i.test(req.path)) {
       next();
     } else {
       res.header(
@@ -212,14 +210,12 @@ export function serveDashboard(
     }
   });
 
-  console.log('Serving static files from:', staticPath);
   app.use(express.static(staticPath));
 
   // Start the server
   const PORT = parseInt(port ? port.toString() : '8999');
 
-  app.listen(PORT, host, () => {
-    console.log(`App listening on ${host}:${port}`);
-    console.log('Press Ctrl+C to quit.');
+  app.listen(PORT, () => {
+    console.log(`🐶 MonoDog Dashboard running on:  http://localhost:${PORT}`);
   });
 }

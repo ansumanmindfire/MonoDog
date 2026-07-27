@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import path from 'path';
 import { appConfig } from '../config-loader';
 import { AppLogger } from '../middleware/logger';
-import { calculatePackageHealth } from '@mindfiredigital/utils/helpers';
+import { calculatePackageHealth } from '@mindfiredigital/utils';
 import * as yaml from 'js-yaml';
 
 import type { PackageInfo, DependencyInfo, MonorepoStats } from '../types';

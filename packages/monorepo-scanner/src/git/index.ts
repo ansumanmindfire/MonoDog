@@ -13,11 +13,15 @@ export function getLastModified(packagePath: string): Date {
 }
 
 export async function getGitInfo(
-  packagePath: string
+  packagePath: string,
+  targetMonorepoRoot?: string
 ): Promise<PackageReport['gitInfo'] | undefined> {
   try {
-    const gitPath = path.join(packagePath, '.git');
-    if (!fs.existsSync(gitPath)) {
+    const rootPath = path.resolve(
+      targetMonorepoRoot || process.env.MONODOG_TARGET_ROOT || process.cwd()
+    );
+
+    if (!fs.existsSync(path.join(rootPath, '.git'))) {
       return undefined;
     }
 
