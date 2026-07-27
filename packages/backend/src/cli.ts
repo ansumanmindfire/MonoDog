@@ -210,34 +210,32 @@ const run = async () => {
     const schemaPath =
       schemaCandidates.find(p => fs.existsSync(p)) || schemaCandidates[0];
     if (fs.existsSync(schemaPath)) {
-      console.log('[monodog] Generating Prisma client...');
       const detectedPM = detectPackageManager(rootPath);
       const runPrisma = (action: string, extraArgs: string[]) => {
         const envObj = {
           ...process.env,
           DATABASE_URL: process.env.DATABASE_URL,
         };
+
         let cmd = 'npx';
         let cmdArgs = ['prisma', action, ...extraArgs];
 
         if (detectedPM === 'pnpm') {
           cmd = 'pnpm';
-          cmdArgs = ['exec', 'prisma', action, ...extraArgs];
+          cmdArgs = ['dlx', 'prisma', action, ...extraArgs];
         } else if (detectedPM === 'bun') {
           cmd = 'bunx';
           cmdArgs = ['prisma', action, ...extraArgs];
         } else if (detectedPM === 'yarn') {
           cmd = 'yarn';
-          cmdArgs = ['prisma', action, ...extraArgs];
+          cmdArgs = ['dlx', 'prisma', action, ...extraArgs];
         }
 
-        const res = spawnSync(cmd, cmdArgs, { stdio: 'ignore', env: envObj });
-        if (res.status !== 0 && cmd !== 'npx') {
-          spawnSync('npx', ['prisma', action, ...extraArgs], {
-            stdio: 'ignore',
-            env: envObj,
-          });
-        }
+        spawnSync(cmd, cmdArgs, {
+          stdio: 'inherit',
+          env: envObj,
+          shell: true,
+        });
       };
 
       runPrisma('generate', [`--schema=${schemaPath}`]);
