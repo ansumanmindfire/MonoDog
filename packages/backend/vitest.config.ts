@@ -32,7 +32,7 @@ export default defineConfig({
         'src/config-loader.ts',
         'src/utils/**',
         '**/*.d.ts',
-        'tests/**',
+        '__tests__/**',
       ],
     },
   },
