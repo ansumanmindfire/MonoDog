@@ -110,13 +110,13 @@ export function startServer(
   const PORT = parseInt(port ? port.toString() : '4000');
 
   const server = app
-    .listen(PORT, host, async () => {
+    .listen(PORT, async () => {
       await refreshAllPackages(rootPath);
 
       const pcount = await prisma.package.count();
       console.log(`[monodog] Total packages found: ${pcount}`);
       console.log(
-        `🚀 Backend API Server running on: http://${host}:${PORT}/api`
+        `🚀 Backend API Server running on: http://localhost:${PORT}/api`
       );
 
       // Start background worker for scheduled releases & pipeline cleanup
@@ -215,7 +215,7 @@ export function serveDashboard(
   // Start the server
   const PORT = parseInt(port ? port.toString() : '8999');
 
-  app.listen(PORT, host, () => {
-    console.log(`🐶 MonoDog Dashboard running on:  http://${host}:${PORT}`);
+  app.listen(PORT, () => {
+    console.log(`🐶 MonoDog Dashboard running on:  http://localhost:${PORT}`);
   });
 }

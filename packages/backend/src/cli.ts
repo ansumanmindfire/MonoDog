@@ -217,18 +217,19 @@ const run = async () => {
           DATABASE_URL: process.env.DATABASE_URL,
         };
 
+        const prisma = 'prisma@5.22.0';
         let cmd = 'npx';
-        let cmdArgs = ['prisma', action, ...extraArgs];
+        let cmdArgs = [prisma, action, ...extraArgs];
 
         if (detectedPM === 'pnpm') {
           cmd = 'pnpm';
-          cmdArgs = ['dlx', 'prisma', action, ...extraArgs];
+          cmdArgs = ['dlx', prisma, action, ...extraArgs];
         } else if (detectedPM === 'bun') {
           cmd = 'bunx';
-          cmdArgs = ['prisma', action, ...extraArgs];
+          cmdArgs = [prisma, action, ...extraArgs];
         } else if (detectedPM === 'yarn') {
           cmd = 'yarn';
-          cmdArgs = ['dlx', 'prisma', action, ...extraArgs];
+          cmdArgs = ['dlx', prisma, action, ...extraArgs];
         }
 
         spawnSync(cmd, cmdArgs, {
