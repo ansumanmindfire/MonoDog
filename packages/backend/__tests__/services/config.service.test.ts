@@ -51,7 +51,7 @@ describe('Config Service Unit Tests', () => {
 
   describe('findMonorepoRoot', () => {
     it('should resolve provided root path or process.cwd()', () => {
-      expect(findMonorepoRoot('/some/path')).toBe('/some/path');
+      expect(findMonorepoRoot('/some/path')).toBe(path.resolve('/some/path'));
       expect(findMonorepoRoot()).toBe(process.cwd());
     });
   });
