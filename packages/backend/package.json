@@ -23,7 +23,6 @@
     "prisma"
   ],
   "scripts": {
-    "postinstall": "prisma generate --schema=./prisma/schema.prisma",
     "dev": "tsx src/run-db.ts tsx watch --exclude \"../../.changeset/**\" src/serve-dev.ts",
     "start": "node dist/packages/backend/src/cli.js",
     "prepublishOnly": "pnpm run build",
@@ -41,8 +40,6 @@
     "test:coverage": "vitest run --coverage --fileParallelism=false"
   },
   "dependencies": {
-    "@mindfiredigital/monorepo-scanner": "workspace:*",
-    "@mindfiredigital/utils": "workspace:*",
     "@prisma/client": "^5.7.0",
     "body-parser": "^1.20.2",
     "cookie-parser": "^1.4.7",
@@ -59,6 +56,8 @@
   },
   "devDependencies": {
     "@mindfiredigital/monodog-dashboard": "workspace:*",
+    "@mindfiredigital/monorepo-scanner": "workspace:*",
+    "@mindfiredigital/utils": "workspace:*",
     "@types/body-parser": "^1.19.5",
     "@types/cookie-parser": "^1.4.10",
     "@types/cors": "^2.8.17",

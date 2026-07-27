@@ -177,8 +177,13 @@ const run = async () => {
 
   const dbAbsolutePath = path.resolve(rootPath, 'monodog.db');
   const dbUrl = `file:${dbAbsolutePath}`;
-  process.env.DATABASE_URL = process.env.DATABASE_URL || dbUrl;
-  process.env.MONODOG_TARGET_ROOT = process.env.MONODOG_TARGET_ROOT || rootPath;
+  if (
+    !process.env.DATABASE_URL ||
+    process.env.DATABASE_URL.includes('./monodog.db')
+  ) {
+    process.env.DATABASE_URL = dbUrl;
+  }
+  process.env.MONODOG_TARGET_ROOT = rootPath;
 
   // Ensure Prisma client is generated and DB tables are created before starting server
   try {

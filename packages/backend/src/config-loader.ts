@@ -102,5 +102,20 @@ function createConfigFileIfMissing(rootPath: string): void {
   }
 }
 
-const appConfig = loadConfig();
-export { appConfig };
+export const appConfig = {
+  get workspace() {
+    return loadConfig().workspace;
+  },
+  get database() {
+    return loadConfig().database;
+  },
+  get dashboard() {
+    return loadConfig().dashboard;
+  },
+  get server() {
+    return loadConfig().server;
+  },
+  get health() {
+    return loadConfig().health;
+  },
+};
