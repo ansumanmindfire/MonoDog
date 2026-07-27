@@ -3,6 +3,7 @@
  */
 
 import express from 'express';
+import fs from 'fs';
 import path from 'path';
 import type { Express } from 'express';
 import { httpLogger, AppLogger } from './logger';
@@ -76,6 +77,22 @@ function createDashboardApp(): Express {
   // Request logging
   app.use(httpLogger);
 
+  function resolveDashboardPath(): string {
+    const candidates = [
+      path.resolve(__dirname, '..', '..', '..', 'dashboard'),
+      path.resolve(__dirname, '..', '..', 'dashboard'),
+      path.resolve(__dirname, '..', 'dashboard'),
+      path.resolve(process.cwd(), 'dist', 'dashboard'),
+      path.resolve(process.cwd(), 'packages', 'backend', 'dist', 'dashboard'),
+    ];
+    return (
+      candidates.find(p => fs.existsSync(path.join(p, 'index.html'))) ||
+      candidates[0]
+    );
+  }
+
+  const staticPath = resolveDashboardPath();
+
   // SPA routing: serve index.html for non-static routes
   app.use((_req, _res, next) => {
     if (STATIC_FILE_PATTERN.test(_req.path)) {
@@ -87,13 +104,7 @@ function createDashboardApp(): Express {
       _res.sendFile(
         'index.html',
         {
-          root: path.resolve(
-            __dirname,
-            '..',
-            '..',
-            'monodog-dashboard',
-            'dist'
-          ),
+          root: staticPath,
         },
         (err: Error | null) => {
           if (err) {
@@ -108,13 +119,6 @@ function createDashboardApp(): Express {
   });
 
   // Static files
-  const staticPath = path.join(
-    __dirname,
-    '..',
-    '..',
-    'monodog-dashboard',
-    'dist'
-  );
   AppLogger.debug('Serving static files from:', { path: staticPath });
   app.use(
     express.static(staticPath, {

@@ -6,7 +6,7 @@ import { MonodogConfig } from './types';
 let config: MonodogConfig | null = null;
 
 function resolveRootPath(): string {
-  return path.resolve(process.cwd(), '.');
+  return process.env.MONODOG_TARGET_ROOT || path.resolve(process.cwd(), '.');
 }
 
 /**
@@ -56,14 +56,13 @@ function createConfigFileIfMissing(rootPath: string): void {
   const defaultContent = {
     workspace: {
       root_dir: './', // Relative to where the config file is located
-      install_path: 'packages', // Where to install monodog packages
     },
     database: {
       path: 'file:./monodog.db', // SQLite database file path, relative to prisma schema location
     },
     dashboard: {
       host: '0.0.0.0',
-      port: '3010',
+      port: 3010,
     },
     server: {
       host: '0.0.0.0', // Default host for the API server
@@ -103,5 +102,20 @@ function createConfigFileIfMissing(rootPath: string): void {
   }
 }
 
-const appConfig = loadConfig();
-export { appConfig };
+export const appConfig = {
+  get workspace() {
+    return loadConfig().workspace;
+  },
+  get database() {
+    return loadConfig().database;
+  },
+  get dashboard() {
+    return loadConfig().dashboard;
+  },
+  get server() {
+    return loadConfig().server;
+  },
+  get health() {
+    return loadConfig().health;
+  },
+};

@@ -1,55 +1,11 @@
-// import { Package } from '@prisma/client';
 import * as fs from 'fs';
 import path from 'path';
-
-export interface PackageInfo {
-  name: string;
-  version: string;
-  type: string; //'app' | 'lib' | 'tool';
-  path: string;
-  dependencies: Record<string, string>;
-  devDependencies: Record<string, string>;
-  peerDependencies: Record<string, string>;
-  scripts: Record<string, string>;
-  maintainers: string[];
-  description?: string;
-  license?: string;
-  repository?: Record<string, string>;
-}
-
-export interface DependencyInfo {
-  // name: string;
-  // currentVersion: string;
-  // latestVersion?: string;
-  // status: 'up-to-date' | 'outdated' | 'major-update' | 'unknown';
-  // type: 'production' | 'development';
-  name: string;
-  version: string;
-  type: 'dependency' | 'devDependency' | 'peerDependency';
-  latest?: string;
-  status?: 'up-to-date' | 'outdated' | 'major-update' | 'unknown';
-  outdated?: boolean;
-}
-
-export interface PackageHealth {
-  buildStatus: 'success' | 'failed' | 'running' | 'unknown';
-  testCoverage: number;
-  lintStatus: 'pass' | 'fail' | 'unknown';
-  securityAudit: 'pass' | 'fail' | 'unknown';
-  overallScore: number;
-}
-
-export interface MonorepoStats {
-  totalPackages: number;
-  apps: number;
-  libraries: number;
-  tools: number;
-  healthyPackages: number;
-  warningPackages: number;
-  errorPackages: number;
-  outdatedDependencies: number;
-  totalDependencies: number;
-}
+import {
+  PackageInfo,
+  DependencyInfo,
+  PackageHealth,
+  MonorepoStats,
+} from './types';
 
 async function fileExists(filePath: string): Promise<boolean> {
   try {

@@ -1,7 +1,7 @@
 import path from 'path';
 import fs from 'fs';
 import { prisma } from '../db/prisma';
-import { scanMonorepo } from '@mindfiredigital/utils/helpers';
+import { scanMonorepo } from '@mindfiredigital/utils';
 import { storePackage } from '../utils/helpers';
 import { MonorepoScanner } from '@mindfiredigital/monorepo-scanner';
 import { PackageRepository } from '../repositories';
@@ -177,7 +177,7 @@ export const getPackageByName = async (name: string) => {
   const transformedPkg = transformPackage(pkg);
 
   let packageReport = null;
-  const rootPath = process.cwd();
+  const rootPath = process.env.MONODOG_TARGET_ROOT || process.cwd();
   const allPackages = await scanMonorepo(rootPath);
   const pkgInfo = allPackages.find(p => p.name === name);
 

@@ -3,7 +3,6 @@ import { AppLogger } from '../middleware/logger';
 import {
   parseChangelog,
   fetchGitHubReleases,
-  getVersionCommits,
 } from '../services/changelog.service';
 import { ReleaseData } from '../types/changelog.types';
 import { getPrismaClient } from '../repositories';
@@ -54,26 +53,6 @@ const getChangelog = async (req: Request, res: Response) => {
       const dateB = b.date ? new Date(b.date).getTime() : 0;
       return dateB - dateA;
     });
-
-    // Attach Commits to each release
-    for (let i = 0; i < sortedReleases.length; i++) {
-      const currentRelease = sortedReleases[i];
-      const previousRelease = sortedReleases[i + 1];
-
-      const endDate = currentRelease.date
-        ? new Date(currentRelease.date)
-        : new Date();
-      const startDate = previousRelease?.date
-        ? new Date(previousRelease.date)
-        : null;
-
-      // Fetch the commits that happened between the previous release and this release
-      currentRelease.commits = await getVersionCommits(
-        packageName,
-        startDate,
-        endDate
-      );
-    }
 
     return res.status(200).json(sortedReleases);
   } catch (error) {

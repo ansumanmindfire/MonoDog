@@ -1,6 +1,19 @@
 import { defineConfig } from 'vitest/config';
+import path from 'path';
 
 export default defineConfig({
+  resolve: {
+    alias: {
+      '@mindfiredigital/utils': path.resolve(
+        __dirname,
+        '../../libs/utils/index.ts'
+      ),
+      '@mindfiredigital/monorepo-scanner': path.resolve(
+        __dirname,
+        '../../packages/monorepo-scanner/src/index.ts'
+      ),
+    },
+  },
   test: {
     environment: 'node',
     coverage: {
@@ -19,7 +32,7 @@ export default defineConfig({
         'src/config-loader.ts',
         'src/utils/**',
         '**/*.d.ts',
-        'tests/**',
+        '__tests__/**',
       ],
     },
   },

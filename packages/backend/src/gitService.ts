@@ -119,7 +119,6 @@ export class GitService {
       await execPromise('git rev-parse --is-inside-work-tree', {
         cwd: this.repoPath,
       });
-      console.log('Valid git repository');
     } catch (error) {
       throw new Error(
         'Not a git repository (or any of the parent directories)'

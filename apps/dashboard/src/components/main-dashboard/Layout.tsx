@@ -8,6 +8,7 @@ import {
   Cog6ToothIcon,
   RocketLaunchIcon,
   LogoutIcon,
+  BulldogIcon,
 } from '../../icons/index';
 import { useAuth } from '../../services/auth-context';
 
@@ -80,8 +81,11 @@ export default function Layout({ children }: LayoutProps) {
     <div className="min-h-screen bg-neutral-50">
       {/* Sidebar */}
       <div className="fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-medium">
-        <div className="flex h-16 items-center justify-center border-b border-neutral-200">
-          <h1 className="text-heading text-xl text-primary-700">MonoDog</h1>
+        <div className="flex h-16 items-center justify-center gap-4 border-b border-neutral-200 px-4">
+          <BulldogIcon className="w-12 h-12 shrink-0" width={48} height={48} />
+          <h1 className="text-heading text-xl text-primary-700 font-bold tracking-tight">
+            MonoDog
+          </h1>
         </div>
         <nav className="mt-8 px-4">
           <ul className="space-y-2">

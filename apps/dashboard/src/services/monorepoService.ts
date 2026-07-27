@@ -437,6 +437,29 @@ class MonorepoService {
       throw error;
     }
   }
+  async getChangelog(packageName: string): Promise<any[]> {
+    try {
+      const res = await apiClient.get<any[]>(
+        DASHBOARD_API_ENDPOINTS.CHANGELOG(packageName)
+      );
+      return res.success ? res.data : [];
+    } catch (error) {
+      console.error('Error fetching changelog:', error);
+      return [];
+    }
+  }
+
+  async getCommits(packagePath: string): Promise<any[]> {
+    try {
+      const res = await apiClient.get<any[]>(
+        DASHBOARD_API_ENDPOINTS.COMMITS(packagePath)
+      );
+      return res.success && Array.isArray(res.data) ? res.data : [];
+    } catch (error) {
+      console.error('Error fetching package commits:', error);
+      return [];
+    }
+  }
 }
 
 export const monorepoService = new MonorepoService();

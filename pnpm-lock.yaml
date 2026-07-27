@@ -209,10 +209,10 @@ importers:
   packages/backend:
     dependencies:
       '@mindfiredigital/monorepo-scanner':
-        specifier: 1.0.9
+        specifier: workspace:*
         version: link:../monorepo-scanner
       '@mindfiredigital/utils':
-        specifier: 1.0.2
+        specifier: workspace:*
         version: link:../../libs/utils
       '@prisma/client':
         specifier: ^5.7.0
@@ -254,6 +254,9 @@ importers:
         specifier: ^5.0.1
         version: 5.0.1(express@4.22.2)
     devDependencies:
+      '@mindfiredigital/monodog-dashboard':
+        specifier: workspace:*
+        version: link:../../apps/dashboard
       '@types/body-parser':
         specifier: ^1.19.5
         version: 1.19.6
@@ -300,7 +303,7 @@ importers:
   packages/monorepo-scanner:
     dependencies:
       '@mindfiredigital/utils':
-        specifier: 1.0.2
+        specifier: workspace:*
         version: link:../../libs/utils
       '@prisma/client':
         specifier: ^5.7.0
