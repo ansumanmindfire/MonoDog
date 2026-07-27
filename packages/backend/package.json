@@ -24,9 +24,9 @@
   ],
   "scripts": {
     "dev": "tsx src/run-db.ts tsx watch --exclude \"../../.changeset/**\" src/serve-dev.ts",
-    "start": "node dist/packages/backend/src/cli.js",
+    "start": "node dist/cli.js",
     "prepublishOnly": "pnpm run build",
-    "build": "tsc -p tsconfig.json",
+    "build": "tsup && node scripts/copy-dashboard.js",
     "prestart": "npm run build",
     "cli": "pnpm run build && node dist/cli.js",
     "clean": "rimraf dist node_modules/.cache",
@@ -69,6 +69,7 @@
     "@vitest/coverage-v8": "^4.1.4",
     "cross-env": "^10.1.0",
     "ts-node": "^10.0.0",
+    "tsup": "^8.5.1",
     "tsx": "^4.6.0",
     "typescript": "^5.3.8",
     "vitest": "^4.1.4"
