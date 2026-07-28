@@ -15,7 +15,6 @@
     "mindfiredigital"
   ],
   "license": "MIT",
-  "main": "dist/index.js",
   "bin": {
     "monodog": "dist/cli.js"
   },
