@@ -15,8 +15,9 @@
     "mindfiredigital"
   ],
   "license": "MIT",
+  "main": "dist/index.js",
   "bin": {
-    "monodog": "dist/packages/backend/src/cli.js"
+    "monodog": "dist/cli.js"
   },
   "files": [
     "dist",
