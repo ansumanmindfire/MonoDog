@@ -1,6 +1,9 @@
 import path from 'path';
 import { prisma } from '../db/prisma';
-import { calculatePackageHealth } from '@mindfiredigital/utils';
+import {
+  calculatePackageHealth,
+  checkOutdatedDependencies,
+} from '@mindfiredigital/utils';
 import { scanMonorepo } from '../utils/utilities';
 import {
   funCheckBuildStatus,
@@ -9,6 +12,7 @@ import {
   funCheckSecurityAudit,
 } from '@mindfiredigital/monorepo-scanner';
 import { appConfig } from '../config-loader';
+import { storePackage } from '../utils/helpers';
 
 export const getSystemHealth = () => {
   return {
@@ -70,15 +74,46 @@ export const getPackageHealthMetrics = async (
   };
 };
 
-export const getAllPackagesHealthMetrics = async () => {
-  const packageHealthData = await prisma.packageHealth.findMany();
+export const getAllPackagesHealthMetrics = async (targetRoot?: string) => {
+  const rootPath = targetRoot || process.env.MONODOG_TARGET_ROOT || process.cwd();
+  let packageHealthData = await prisma.packageHealth.findMany();
 
-  const packages = packageHealthData.map((pkg: any) => {
+  // Auto-initialize if database has 0 health records
+  if (!packageHealthData || packageHealthData.length === 0) {
+    try {
+      const rootDir = path.resolve(rootPath);
+      const monorepoPkgs = await scanMonorepo(rootDir);
+
+      for (const pkg of monorepoPkgs) {
+        await storePackage(pkg).catch(() => {});
+        await prisma.packageHealth.upsert({
+          where: { packageName: pkg.name },
+          update: {},
+          create: {
+            packageName: pkg.name,
+            packageOverallScore: 0,
+            packageBuildStatus: 'unknown',
+            packageTestCoverage: 0,
+            packageLintStatus: 'unknown',
+            packageSecurity: 'unknown',
+            packageDependencies: 'up-to-date',
+          },
+        });
+      }
+
+      packageHealthData = await prisma.packageHealth.findMany();
+    } catch (initErr) {
+      console.warn('Error auto-initializing package health records:', initErr);
+    }
+  }
+
+  const packages = (packageHealthData || []).map((pkg: any) => {
     const health = {
       buildStatus: pkg.packageBuildStatus,
       testCoverage: pkg.packageTestCoverage,
       lintStatus: pkg.packageLintStatus,
       securityAudit: pkg.packageSecurity,
+      dependencyStatus: pkg.packageDependencies || 'up-to-date',
       overallScore: pkg.packageOverallScore,
     };
 
@@ -107,114 +142,163 @@ export const getAllPackagesHealthMetrics = async () => {
       total,
       healthy,
       unhealthy,
-      averageScore,
+      averageScore: Math.round(averageScore * 100) / 100,
     },
   };
 };
 
-export const refreshPackagesHealth = async (rootPath?: string) => {
-  const resolvedRootPath = rootPath || process.cwd();
+export interface HealthJobStatus {
+  status: 'idle' | 'processing' | 'completed' | 'failed';
+  progress: number;
+  totalPackages: number;
+  completedPackages: number;
+  currentPackage?: string;
+  currentStep?: string;
+  error?: string;
+  updatedAt: string;
+}
+
+let activeHealthJob: HealthJobStatus = {
+  status: 'idle',
+  progress: 0,
+  totalPackages: 0,
+  completedPackages: 0,
+  updatedAt: new Date().toISOString(),
+};
+
+export const getHealthJobStatus = (): HealthJobStatus => activeHealthJob;
+
+export const triggerAsyncRefreshPackagesHealth = (rootPath?: string) => {
+  if (activeHealthJob.status === 'processing') {
+    return activeHealthJob;
+  }
+
+  activeHealthJob = {
+    status: 'processing',
+    progress: 5,
+    totalPackages: 0,
+    completedPackages: 0,
+    currentStep: 'Scanning monorepo packages...',
+    updatedAt: new Date().toISOString(),
+  };
+
+  executeBackgroundHealthRefresh(rootPath).catch(err => {
+    console.error('Error during background health refresh:', err);
+    activeHealthJob = {
+      ...activeHealthJob,
+      status: 'failed',
+      error: err instanceof Error ? err.message : 'Health scan failed',
+      updatedAt: new Date().toISOString(),
+    };
+  });
+
+  return activeHealthJob;
+};
+
+const executeBackgroundHealthRefresh = async (rootPath?: string) => {
+  const resolvedRootPath =
+    rootPath || process.env.MONODOG_TARGET_ROOT || process.cwd();
   const rootDir = path.resolve(resolvedRootPath);
 
   const packages = await scanMonorepo(rootDir);
+  const total = packages.length;
 
-  const healthMetrics = await Promise.all(
-    packages.map(async (pkg: any) => {
-      try {
-        const buildStatus = await funCheckBuildStatus(pkg);
-        const testCoverage = await funCheckTestCoverage(
-          pkg,
-          appConfig.health?.testCoveragePath
-        );
-        const lintStatus = await funCheckLintStatus(pkg);
-        const securityAudit = await funCheckSecurityAudit(pkg);
-
-        const overallScore = calculatePackageHealth(
-          buildStatus,
-          testCoverage,
-          lintStatus,
-          securityAudit
-        );
-
-        const health = {
-          buildStatus,
-          testCoverage,
-          lintStatus,
-          securityAudit,
-          overallScore: overallScore.overallScore,
-        };
-
-        const packageStatus =
-          health.overallScore >= 80
-            ? 'healthy'
-            : health.overallScore >= 60
-              ? 'warning'
-              : 'error';
-
-        await prisma.packageHealth.upsert({
-          where: {
-            packageName: pkg.name,
-          },
-          update: {
-            packageOverallScore: overallScore.overallScore,
-            packageBuildStatus: buildStatus,
-            packageTestCoverage: testCoverage,
-            packageLintStatus: lintStatus,
-            packageSecurity: securityAudit,
-            packageDependencies: '',
-            updatedAt: new Date(),
-          },
-          create: {
-            packageName: pkg.name,
-            packageOverallScore: overallScore.overallScore,
-            packageBuildStatus: buildStatus,
-            packageTestCoverage: testCoverage,
-            packageLintStatus: lintStatus,
-            packageSecurity: securityAudit,
-            packageDependencies: '',
-          },
-        });
-
-        await prisma.package.update({
-          where: { name: pkg.name },
-          data: { status: packageStatus },
-        });
-
-        return {
-          packageName: pkg.name,
-          health,
-          isHealthy: health.overallScore >= 80,
-        };
-      } catch {
-        return {
-          packageName: pkg.name,
-          health: {
-            buildStatus: 'unknown',
-            testCoverage: 0,
-            lintStatus: 'unknown',
-            securityAudit: { vulnerabilities: 0, severity: 'none' },
-            overallScore: 0,
-          },
-          isHealthy: false,
-          error: 'Failed to fetch health metrics',
-        };
-      }
-    })
-  );
-
-  return {
-    packages: healthMetrics,
-    summary: {
-      total: packages.length,
-      healthy: healthMetrics.filter(h => h.isHealthy).length,
-      unhealthy: healthMetrics.filter(h => !h.isHealthy).length,
-      averageScore:
-        healthMetrics.filter(h => h.health).length > 0
-          ? healthMetrics
-              .filter(h => h.health)
-              .reduce((sum, h) => sum + h.health!.overallScore, 0) /
-            healthMetrics.filter(h => h.health).length
-          : 0,
-    },
+  activeHealthJob = {
+    ...activeHealthJob,
+    totalPackages: total,
+    progress: 10,
+    currentStep: `Found ${total} packages. Starting health checks...`,
+    updatedAt: new Date().toISOString(),
   };
+
+  let completed = 0;
+
+  for (const pkg of packages) {
+    activeHealthJob = {
+      ...activeHealthJob,
+      currentPackage: pkg.name,
+      currentStep: `Scanning ${pkg.name} (${completed + 1}/${total})...`,
+      progress: Math.floor(10 + (completed / total) * 85),
+      updatedAt: new Date().toISOString(),
+    };
+
+    // Isolate every check so individual scanner errors NEVER break DB upserts
+    const buildStatus = await funCheckBuildStatus(pkg).catch(() => 'failed');
+    const testCoverage = await funCheckTestCoverage(
+      pkg,
+      appConfig.health?.testCoveragePath
+    ).catch(() => 0);
+    const lintStatus = await funCheckLintStatus(pkg).catch(() => 'unknown');
+    const securityAudit = await funCheckSecurityAudit(
+      pkg,
+      resolvedRootPath
+    ).catch(() => 'unknown');
+
+    const overallScore = calculatePackageHealth(
+      buildStatus,
+      testCoverage,
+      lintStatus,
+      securityAudit
+    );
+
+    let dependencyStatus = 'up-to-date';
+    try {
+      const outdatedDeps = await checkOutdatedDependencies(pkg);
+      dependencyStatus =
+        outdatedDeps && outdatedDeps.length > 0 ? 'outdated' : 'up-to-date';
+    } catch {
+      dependencyStatus = 'up-to-date';
+    }
+
+    try {
+      await storePackage(pkg).catch(() => {});
+      await prisma.packageHealth.upsert({
+        where: {
+          packageName: pkg.name,
+        },
+        update: {
+          packageOverallScore: overallScore.overallScore,
+          packageBuildStatus: buildStatus,
+          packageTestCoverage: testCoverage,
+          packageLintStatus: lintStatus,
+          packageSecurity: securityAudit,
+          packageDependencies: dependencyStatus,
+          updatedAt: new Date(),
+        },
+        create: {
+          packageName: pkg.name,
+          packageOverallScore: overallScore.overallScore,
+          packageBuildStatus: buildStatus,
+          packageTestCoverage: testCoverage,
+          packageLintStatus: lintStatus,
+          packageSecurity: securityAudit,
+          packageDependencies: dependencyStatus,
+        },
+      });
+    } catch (err) {
+      console.warn(`Error writing health database row for ${pkg.name}:`, err);
+    }
+
+    completed++;
+    activeHealthJob = {
+      ...activeHealthJob,
+      completedPackages: completed,
+      progress: Math.floor(10 + (completed / total) * 85),
+      updatedAt: new Date().toISOString(),
+    };
+  }
+
+  activeHealthJob = {
+    status: 'completed',
+    progress: 100,
+    totalPackages: total,
+    completedPackages: total,
+    currentStep: 'Health scan completed successfully!',
+    updatedAt: new Date().toISOString(),
+  };
+};
+
+export const refreshPackagesHealth = async (rootPath?: string) => {
+  await executeBackgroundHealthRefresh(rootPath);
+  return getAllPackagesHealthMetrics(rootPath);
 };
