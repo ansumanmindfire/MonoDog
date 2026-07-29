@@ -22,6 +22,7 @@ export default function BuildList({
   onBuildSelect,
   filters,
   onFiltersChange,
+  onBuildCancel,
 }: BuildListProps) {
   const availablePackages = getUniquePackages(builds);
   const availableStatuses = getUniqueStatuses(builds);
@@ -161,14 +162,14 @@ export default function BuildList({
                       </div>
                     </div>
 
-                    <div className="text-right">
+                    <div className="text-right flex flex-col items-end justify-between space-y-2">
                       {build.duration && (
                         <div className="text-sm font-medium text-gray-900">
                           {formatDuration(build.duration)}
                         </div>
                       )}
                       {build.status === 'running' && (
-                        <div className="mt-1">
+                        <div className="flex items-center space-x-3">
                           <div className="flex items-center space-x-2">
                             <div className="w-20 bg-gray-200 rounded-full h-2">
                               <div
@@ -176,10 +177,24 @@ export default function BuildList({
                                 style={{ width: `${progress}%` }}
                               />
                             </div>
-                            <span className="text-xs text-gray-500">
+                            <span className="text-xs text-gray-500 font-medium">
                               {progress}%
                             </span>
                           </div>
+
+                          {onBuildCancel && (
+                            <button
+                              onClick={e => {
+                                e.stopPropagation();
+                                onBuildCancel(build.id);
+                              }}
+                              className="inline-flex items-center px-2.5 py-1 text-xs font-semibold text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 rounded-md transition-colors shadow-sm"
+                              title="Cancel running build on GitHub"
+                            >
+                              <StopIcon className="w-3.5 h-3.5 mr-1 text-red-500" />
+                              Cancel
+                            </button>
+                          )}
                         </div>
                       )}
                     </div>

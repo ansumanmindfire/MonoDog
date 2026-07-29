@@ -138,26 +138,45 @@ class MonorepoService {
     }
   }
 
-  async refreshHealthStatus(): Promise<{
-    overallScore: number;
-    metrics: HealthMetric[];
-    packageHealth: Array<{ package: string; score: number; issues: string[] }>;
-  }> {
+  async refreshHealthStatus(): Promise<any> {
     try {
-      // Call your real backend API
       const healthRes = await apiClient.post(
         DASHBOARD_API_ENDPOINTS.HEALTH.REFRESH
       );
 
       if (!healthRes.success) {
-        throw new Error('Failed to fetch health data');
+        throw new Error('Failed to start health refresh');
       }
 
-      const healthData = healthRes.data;
-
-      return healthData;
+      return healthRes.data;
     } catch (error) {
-      console.error('Error fetching health data:', error);
+      console.error('Error starting health refresh:', error);
+      throw error;
+    }
+  }
+
+  async getHealthRefreshStatus(): Promise<{
+    status: 'idle' | 'processing' | 'completed' | 'failed';
+    progress: number;
+    totalPackages: number;
+    completedPackages: number;
+    currentPackage?: string;
+    currentStep?: string;
+    error?: string;
+  }> {
+    try {
+      const res = await apiClient.get(
+        DASHBOARD_API_ENDPOINTS.HEALTH.REFRESH_STATUS
+      );
+
+      if (!res.success) {
+        throw new Error('Failed to fetch refresh status');
+      }
+
+      return (res.data as any).job;
+    } catch (error) {
+      console.error('Error fetching health refresh status:', error);
+      throw error;
     }
   }
 

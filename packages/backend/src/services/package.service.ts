@@ -28,17 +28,25 @@ export const transformPackage = (pkg: any) => {
 
 export const getAllPackages = async (rootPath?: string) => {
   const resolvedRootPath = rootPath || process.cwd();
+  const rootDir = path.resolve(resolvedRootPath);
 
   let dbPackages = await prisma.package.findMany({
-    include: { _count: { select: { commits: true } }, dependenciesInfo: true },
+    include: {
+      _count: { select: { commits: true } },
+      dependenciesInfo: true,
+    },
   });
 
-  if (!dbPackages.length) {
-    const rootDir = path.resolve(resolvedRootPath);
-    const packages = await scanMonorepo(rootDir);
-
-    for (const pkg of packages) {
-      await storePackage(pkg);
+  if (!dbPackages || dbPackages.length === 0) {
+    try {
+      const packages = await scanMonorepo(rootDir);
+      for (const pkg of packages) {
+        try {
+          await storePackage(pkg);
+        } catch {}
+      }
+    } catch (err) {
+      AppLogger.error('Error syncing monorepo packages:', err as Error);
     }
 
     dbPackages = await prisma.package.findMany({
@@ -58,21 +66,23 @@ export const getAllPackages = async (rootPath?: string) => {
 };
 
 export const getPackagesService = async (rootPath: string) => {
+  const rootDir = rootPath || process.cwd();
   let dbPackages = await PackageRepository.findAll();
-  if (!dbPackages.length) {
+
+  if (!dbPackages || dbPackages.length === 0) {
     try {
-      const rootDir = rootPath;
-      AppLogger.debug('rootDir: ' + rootDir);
       const packages = await scanMonorepo(rootDir);
-      AppLogger.debug('packages scanned: ' + packages.length);
       for (const pkg of packages) {
-        await storePackage(pkg);
+        try {
+          await storePackage(pkg);
+        } catch {}
       }
+      dbPackages = await PackageRepository.findAll();
     } catch (error) {
       throw new Error('Error ' + error);
     }
-    dbPackages = await PackageRepository.findAll();
   }
+
   const transformedPackages = dbPackages.map((pkg: PackageModel) => {
     // We create a new object 'transformedPkg' based on the database record 'pkg'
     const transformedPkg = { ...pkg };

@@ -1,5 +1,11 @@
 # @mindfiredigital/monodog
 
+## 1.11.0
+
+### Minor Changes
+
+- Merge pull request #139 from mindfiredigital/development
+
 ## 1.10.0
 
 ### Minor Changes

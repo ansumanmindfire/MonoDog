@@ -42,25 +42,46 @@ export default function HealthStatus() {
     fetchHealthData();
   }, [refreshKey]);
 
+  const [jobProgress, setJobProgress] = useState<{
+    status: 'idle' | 'processing' | 'completed' | 'failed';
+    progress: number;
+    currentStep?: string;
+    currentPackage?: string;
+    error?: string;
+  } | null>(null);
+
   const refreshData = async () => {
     try {
       setRefreshing(true);
       setError(null);
-      setLoading(true);
-      try {
-        const data = await monorepoService.refreshHealthStatus();
-        setHealthData(data);
-        setError(null);
-      } catch (err) {
-        setError(DASHBOARD_ERROR_MESSAGES.UNKNOWN_ERROR);
-        console.error('Error fetching health data:', err);
-      } finally {
-        setLoading(false);
-      }
+
+      // Trigger async job (returns 202 Accepted immediately)
+      await monorepoService.refreshHealthStatus();
+
+      // Poll progress every 1.5s
+      const pollInterval = setInterval(async () => {
+        try {
+          const status = await monorepoService.getHealthRefreshStatus();
+          setJobProgress(status);
+
+          if (status.status === 'completed') {
+            clearInterval(pollInterval);
+            setRefreshing(false);
+            setJobProgress(null);
+            setRefreshKey(prev => prev + 1);
+          } else if (status.status === 'failed') {
+            clearInterval(pollInterval);
+            setRefreshing(false);
+            setJobProgress(null);
+            setError(status.error || 'Health scan failed');
+          }
+        } catch (err) {
+          console.error('Error polling health refresh status:', err);
+        }
+      }, 1500);
     } catch (err) {
       setError(DASHBOARD_ERROR_MESSAGES.UNKNOWN_ERROR);
-      console.error('Error refreshing health data:', err);
-    } finally {
+      console.error('Error starting health refresh:', err);
       setRefreshing(false);
     }
   };
@@ -274,12 +295,42 @@ export default function HealthStatus() {
         </div>
       </div>
 
-      {/* Show refreshing overlay when refreshing with existing data */}
-      {refreshing && healthData && (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-gray-700">Refreshing health data...</p>
+      {/* Show progress modal when scanning */}
+      {refreshing && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+          <div className="bg-white max-w-md w-full p-6 rounded-xl shadow-2xl border border-gray-100 text-center animate-fade-in">
+            <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+              <ArrowPathIcon className="w-6 h-6 animate-spin" />
+            </div>
+            <h3 className="text-lg font-bold text-gray-900 mb-1">
+              Scanning Monorepo Health
+            </h3>
+            <p className="text-sm text-gray-500 mb-6">
+              {jobProgress?.currentStep ||
+                'Executing background build & security audit...'}
+            </p>
+
+            {/* Progress Bar */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-xs font-semibold text-gray-600">
+                <span>Overall Progress</span>
+                <span className="text-blue-600 font-bold">
+                  {jobProgress?.progress || 7}%
+                </span>
+              </div>
+              <div className="w-full bg-gray-100 rounded-full h-3 overflow-hidden p-0.5 border border-gray-200">
+                <div
+                  className="bg-gradient-to-r from-blue-500 to-indigo-600 h-2 rounded-full transition-all duration-500 ease-out"
+                  style={{ width: `${jobProgress?.progress || 10}%` }}
+                ></div>
+              </div>
+            </div>
+
+            {jobProgress?.currentPackage && (
+              <div className="mt-4 inline-flex items-center space-x-2 px-3 py-1 bg-blue-50 text-blue-700 text-xs font-medium rounded-full">
+                <span>Active: {jobProgress.currentPackage}</span>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -377,7 +428,7 @@ export default function HealthStatus() {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Build Status
                 </th>
-                <th className="hidden px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Test Coverage
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -388,9 +439,6 @@ export default function HealthStatus() {
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Dependencies
-                </th>
-                <th className="hidden px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
                 </th>
               </tr>
             </thead>
@@ -468,10 +516,12 @@ export default function HealthStatus() {
                   </td>
 
                   {/* test coverage */}
-                  <td className="hidden px-6 py-4 whitespace-nowrap">
+                  <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <BeakerIcon className="w-4 h-4 text-gray-400 mr-1" />
-                      <span className="text-sm text-gray-900">-</span>
+                      <span className="text-sm text-gray-900">
+                        {pkg.health.testCoverage ?? 0}%
+                      </span>
                     </div>
                   </td>
 
@@ -497,7 +547,6 @@ export default function HealthStatus() {
                   {/* security */}
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
-                      {/* <ShieldCheckIcon className="w-4 h-4 text-gray-400 mr-1" /> */}
                       <span
                         className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(
                           pkg.health.securityAudit === 'pass'
@@ -520,18 +569,12 @@ export default function HealthStatus() {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span
                       className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(
-                        pkg.health.securityAudit === 'fail'
-                          ? 'vulnerable'
-                          : pkg.health.securityAudit === 'pass'
-                            ? 'up-to-date'
-                            : 'unknown'
+                        (pkg.health as any).dependencyStatus === 'outdated'
+                          ? 'warn'
+                          : 'up-to-date'
                       )}`}
                     >
-                      {pkg.health.securityAudit === 'fail'
-                        ? 'vulnerable'
-                        : pkg.health.securityAudit === 'pass'
-                          ? 'up-to-date'
-                          : 'unknown'}
+                      {(pkg.health as any).dependencyStatus || 'up-to-date'}
                     </span>
                   </td>
 
