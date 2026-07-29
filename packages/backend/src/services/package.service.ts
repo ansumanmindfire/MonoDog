@@ -43,7 +43,11 @@ export const getAllPackages = async (rootPath?: string) => {
       for (const pkg of packages) {
         try {
           await storePackage(pkg);
-        } catch {}
+        } catch (err) {
+          AppLogger.warn(
+            `Failed to store package ${pkg?.name || 'unknown'}: ${err instanceof Error ? err.message : String(err)}`
+          );
+        }
       }
     } catch (err) {
       AppLogger.error('Error syncing monorepo packages:', err as Error);
@@ -75,7 +79,11 @@ export const getPackagesService = async (rootPath: string) => {
       for (const pkg of packages) {
         try {
           await storePackage(pkg);
-        } catch {}
+        } catch (err) {
+          AppLogger.warn(
+            `Failed to store package ${pkg?.name || 'unknown'}: ${err instanceof Error ? err.message : String(err)}`
+          );
+        }
       }
       dbPackages = await PackageRepository.findAll();
     } catch (error) {
@@ -219,8 +227,7 @@ export const updatePackageConfig = async (
     newConfig = JSON.parse(config);
   } catch (error) {
     throw new Error(
-      `JSON parsing error: ${
-        error instanceof Error ? error.message : 'Invalid format'
+      `JSON parsing error: ${error instanceof Error ? error.message : 'Invalid format'
       }`
     );
   }
@@ -243,8 +250,7 @@ export const updatePackageConfig = async (
     existingConfig = JSON.parse(existingContent);
   } catch (error) {
     throw new Error(
-      `Error parsing existing package.json: ${
-        error instanceof Error ? error.message : 'Invalid JSON'
+      `Error parsing existing package.json: ${error instanceof Error ? error.message : 'Invalid JSON'
       }`
     );
   }
