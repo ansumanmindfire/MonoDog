@@ -352,28 +352,7 @@ function generateDependencyGraph(packages: PackageInfo[]) {
   return { nodes, edges };
 }
 
-/**
- * Checks if a package has outdated dependencies
- */
-function checkOutdatedDependencies(packageInfo: PackageInfo): DependencyInfo[] {
-  const outdated: DependencyInfo[] = [];
-
-  // This would typically involve checking against npm registry
-  // For now, we'll simulate with some basic checks
-  Object.entries(packageInfo.dependencies).forEach(([name, version]) => {
-    if (version.startsWith('^') || version.startsWith('~')) {
-      // Could be outdated, would need registry check
-      outdated.push({
-        name,
-        version: version,
-        status: 'unknown',
-        type: 'dependency',
-      });
-    }
-  });
-
-  return outdated;
-}
+export { checkOutdatedDependencies } from '@mindfiredigital/utils';
 
 /**
  * Gets package size information
@@ -530,7 +509,6 @@ export {
   generateMonorepoStats,
   findCircularDependencies,
   generateDependencyGraph,
-  checkOutdatedDependencies,
   getPackageSize,
   calculatePackageHealth,
   findMonorepoRoot,
