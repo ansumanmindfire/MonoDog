@@ -67,12 +67,13 @@ export interface BuildListProps {
   onBuildSelect: (buildId: string | null) => void;
   filters: CIFilters;
   onFiltersChange: (filters: CIFilters) => void;
+  onBuildCancel?: (buildId: string) => void;
 }
 
 export interface PipelineStatusProps {
   pipelines: Pipeline[];
   onPipelineSelect: (pipelineId: string) => void;
-  onPipelineToggle: (pipelineId: string, active: boolean) => void;
+  onPipelineToggle?: (pipelineId: string, active: boolean) => void;
 }
 
 export interface BuildDetailsProps {
