@@ -146,7 +146,11 @@ export default function CIIntegration() {
               sortedByDate[0]?.created_at || new Date().toISOString();
 
             return {
-              id: String(sortedByDate[0]?.workflow_id || sortedByDate[0]?.path?.split('/').pop() || name),
+              id: String(
+                sortedByDate[0]?.workflow_id ||
+                  sortedByDate[0]?.path?.split('/').pop() ||
+                  name
+              ),
               name: name as string,
               packageName: (name as string) || 'monorepo',
               status:

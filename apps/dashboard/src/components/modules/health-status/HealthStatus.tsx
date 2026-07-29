@@ -210,8 +210,8 @@ export default function HealthStatus() {
     : 0;
   const warningPackages = healthData
     ? healthData?.packages?.filter(
-      pkg => pkg.health.overallScore >= 60 && pkg.health.overallScore < 80
-    ).length
+        pkg => pkg.health.overallScore >= 60 && pkg.health.overallScore < 80
+      ).length
     : 0;
   const errorPackages = healthData
     ? healthData?.packages?.filter(pkg => pkg.health.overallScore < 60).length
@@ -306,14 +306,17 @@ export default function HealthStatus() {
               Scanning Monorepo Health
             </h3>
             <p className="text-sm text-gray-500 mb-6">
-              {jobProgress?.currentStep || 'Executing background build & security audit...'}
+              {jobProgress?.currentStep ||
+                'Executing background build & security audit...'}
             </p>
 
             {/* Progress Bar */}
             <div className="space-y-2">
               <div className="flex items-center justify-between text-xs font-semibold text-gray-600">
                 <span>Overall Progress</span>
-                <span className="text-blue-600 font-bold">{jobProgress?.progress || 7}%</span>
+                <span className="text-blue-600 font-bold">
+                  {jobProgress?.progress || 7}%
+                </span>
               </div>
               <div className="w-full bg-gray-100 rounded-full h-3 overflow-hidden p-0.5 border border-gray-200">
                 <div
@@ -376,12 +379,13 @@ export default function HealthStatus() {
                 {metric.name}
               </h3>
               <div
-                className={`w-3 h-3 rounded-full ${metric.status === 'healthy'
+                className={`w-3 h-3 rounded-full ${
+                  metric.status === 'healthy'
                     ? 'bg-green-500'
                     : metric.status === 'warning'
                       ? 'bg-yellow-500'
                       : 'bg-red-500'
-                  }`}
+                }`}
               />
             </div>
             <div className="flex items-end space-x-2">
@@ -465,12 +469,13 @@ export default function HealthStatus() {
                     <div className="flex items-center">
                       <div className="w-16 bg-gray-200 rounded-full h-2 mr-2">
                         <div
-                          className={`h-2 rounded-full ${pkg.health.overallScore >= 80
+                          className={`h-2 rounded-full ${
+                            pkg.health.overallScore >= 80
                               ? 'bg-green-500'
                               : pkg.health.overallScore >= 60
                                 ? 'bg-yellow-500'
                                 : 'bg-red-500'
-                            }`}
+                          }`}
                           style={{ width: `${pkg.health.overallScore}%` }}
                         />
                       </div>
@@ -484,12 +489,13 @@ export default function HealthStatus() {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <div
-                        className={`w-3 h-3 rounded-full ${pkg.health.buildStatus === 'success'
+                        className={`w-3 h-3 rounded-full ${
+                          pkg.health.buildStatus === 'success'
                             ? 'bg-green-500'
                             : pkg.health.buildStatus === 'unknown'
                               ? 'bg-yellow-500'
                               : 'bg-red-500'
-                          }`}
+                        }`}
                       />
                       <span
                         className={`ml-2 inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(

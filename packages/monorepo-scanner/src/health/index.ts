@@ -52,7 +52,10 @@ export async function checkTestCoverage(
 
     for (const coveragePath of coveragePaths) {
       if (fs.existsSync(coveragePath)) {
-        if (coveragePath.endsWith('coverage-summary.json') || coveragePath.endsWith('coverage.json')) {
+        if (
+          coveragePath.endsWith('coverage-summary.json') ||
+          coveragePath.endsWith('coverage.json')
+        ) {
           try {
             const coverage = JSON.parse(fs.readFileSync(coveragePath, 'utf8'));
             const pct =
@@ -87,7 +90,10 @@ export async function checkTestCoverage(
               return Math.round((coveredStatements / totalStatements) * 100);
             }
           } catch (error) {
-            console.warn(`Error parsing coverage-final.json for ${pkg.name}:`, error);
+            console.warn(
+              `Error parsing coverage-final.json for ${pkg.name}:`,
+              error
+            );
           }
         }
       }
@@ -164,7 +170,9 @@ export async function checkSecurityAudit(
           (vulns.critical || 0) +
           (vulns.total || 0);
 
-        const keysCount = audit?.vulnerabilities ? Object.keys(audit.vulnerabilities).length : 0;
+        const keysCount = audit?.vulnerabilities
+          ? Object.keys(audit.vulnerabilities).length
+          : 0;
         const finalCount = totalVulns || keysCount;
 
         return finalCount === 0 ? 'pass' : 'fail';

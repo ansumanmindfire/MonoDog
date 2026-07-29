@@ -75,7 +75,8 @@ export const getPackageHealthMetrics = async (
 };
 
 export const getAllPackagesHealthMetrics = async (targetRoot?: string) => {
-  const rootPath = targetRoot || process.env.MONODOG_TARGET_ROOT || process.cwd();
+  const rootPath =
+    targetRoot || process.env.MONODOG_TARGET_ROOT || process.cwd();
   let packageHealthData = await prisma.packageHealth.findMany();
 
   // Auto-initialize if database has 0 health records
