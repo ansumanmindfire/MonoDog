@@ -127,9 +127,10 @@ export class MonorepoScanner {
   }
 
   async checkSecurityAudit(
-    pkg: PackageInfo
+    pkg: PackageInfo,
+    rootPath?: string
   ): Promise<PackageHealth['securityAudit']> {
-    return checkSecurityAudit(pkg);
+    return checkSecurityAudit(pkg, rootPath);
   }
 
   async scanForFileTypes(
@@ -185,7 +186,8 @@ export async function funCheckLintStatus(
 }
 
 export async function funCheckSecurityAudit(
-  pkg: PackageInfo
+  pkg: PackageInfo,
+  rootPath?: string
 ): Promise<PackageHealth['securityAudit']> {
-  return scanner.checkSecurityAudit(pkg);
+  return scanner.checkSecurityAudit(pkg, rootPath);
 }
