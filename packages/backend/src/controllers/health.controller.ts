@@ -4,6 +4,8 @@ import {
   getPackageHealthMetrics,
   getAllPackagesHealthMetrics,
   refreshPackagesHealth,
+  triggerAsyncRefreshPackagesHealth,
+  getHealthJobStatus,
 } from '../services/health.service';
 
 export const getHealth = (req: Request, res: Response) => {
@@ -43,7 +45,8 @@ export const getPackageHealth = async (req: Request, res: Response) => {
 
 export const getAllPackagesHealth = async (req: Request, res: Response) => {
   try {
-    const response = await getAllPackagesHealthMetrics();
+    const rootPath = req.app.locals.rootPath;
+    const response = await getAllPackagesHealthMetrics(rootPath);
 
     res.json(response);
   } catch (error) {
@@ -57,12 +60,31 @@ export const refreshHealth = async (req: Request, res: Response) => {
   try {
     const rootPath = req.app.locals.rootPath;
 
-    const response = await refreshPackagesHealth(rootPath);
+    // Trigger async background job
+    const jobStatus = triggerAsyncRefreshPackagesHealth(rootPath);
 
-    res.json(response);
+    res.status(202).json({
+      success: true,
+      message: 'Health refresh scan started in background',
+      job: jobStatus,
+    });
   } catch (error) {
     res.status(500).json({
-      error: 'Failed to fetch health metrics',
+      error: 'Failed to start health scan',
+    });
+  }
+};
+
+export const getRefreshStatus = (req: Request, res: Response) => {
+  try {
+    const jobStatus = getHealthJobStatus();
+    res.json({
+      success: true,
+      job: jobStatus,
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: 'Failed to fetch health scan status',
     });
   }
 };
