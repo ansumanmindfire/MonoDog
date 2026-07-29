@@ -89,6 +89,16 @@ describe('Health Service Unit Tests', () => {
       vi.mocked(scanMonorepo).mockResolvedValue([
         { name: 'pkg-a', path: '/pkg-a' },
       ] as any);
+      vi.mocked(prisma.packageHealth.findMany).mockResolvedValue([
+        {
+          packageName: 'pkg-a',
+          packageBuildStatus: 'passed',
+          packageTestCoverage: 100,
+          packageLintStatus: 'passed',
+          packageSecurity: {},
+          packageOverallScore: 100,
+        },
+      ] as any);
       vi.mocked(prisma.packageHealth.upsert).mockResolvedValue({} as any);
       vi.mocked(prisma.package.update).mockResolvedValue({} as any);
 

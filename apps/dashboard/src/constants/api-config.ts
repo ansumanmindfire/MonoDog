@@ -9,7 +9,7 @@ const DEFAULT_API_HOST = 'localhost';
 const DEFAULT_API_PORT = 4000;
 export const DEFAULT_TIMEOUT = 30000;
 
-export const TIMEOUT_MS = 60000;
+export const TIMEOUT_MS = 300000;
 
 // API ENDPOINTS
 
@@ -80,6 +80,7 @@ export const DASHBOARD_API_ENDPOINTS = {
   HEALTH: {
     PACKAGES: '/health/packages',
     REFRESH: '/health/refresh',
+    REFRESH_STATUS: '/health/refresh-status',
   },
 
   // Changelog & Commits endpoints

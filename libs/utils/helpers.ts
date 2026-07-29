@@ -131,10 +131,9 @@ function calculatePackageHealth(
       score += 25;
       break;
     case 'fail':
-      score += 0;
-      break;
+    case 'unknown':
     default:
-      score += 10;
+      score += 0;
   }
 
   // Security audit (20 points)
@@ -143,10 +142,9 @@ function calculatePackageHealth(
       score += 20;
       break;
     case 'fail':
-      score += 0;
-      break;
+    case 'unknown':
     default:
-      score += 10;
+      score += 0;
   }
 
   return {
@@ -325,7 +323,7 @@ async function checkOutdatedDependencies(
     }
   };
 
-  const promises: Promise<void>[] = [];
+  const tasks: Array<() => Promise<void>> = [];
   const depGroups = [
     { data: packageInfo.dependencies, type: 'dependency' },
     { data: packageInfo.devDependencies, type: 'devDependency' },
@@ -333,12 +331,19 @@ async function checkOutdatedDependencies(
   ] as const;
 
   depGroups.forEach(group => {
-    Object.entries(group.data || {}).forEach(([name, version]) =>
-      promises.push(checkDep(name, version, group.type))
-    );
+    Object.entries(group.data || {}).forEach(([name, version]) => {
+      if (typeof version === 'string' && !version.startsWith('workspace:')) {
+        tasks.push(() => checkDep(name, version, group.type));
+      }
+    });
   });
 
-  await Promise.all(promises);
+  // Batch Concurrency Chunking: process 20 requests at a time to prevent rate limiting
+  const BATCH_SIZE = 20;
+  for (let i = 0; i < tasks.length; i += BATCH_SIZE) {
+    const batch = tasks.slice(i, i + BATCH_SIZE);
+    await Promise.all(batch.map(task => task()));
+  }
 
   return outdated;
 }

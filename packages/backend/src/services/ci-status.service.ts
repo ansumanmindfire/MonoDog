@@ -213,17 +213,40 @@ export const togglePipeline = async (
   const repoInfo = await getRepositoryInfoFromGit(monorepoRoot);
   if (!repoInfo) throw new Error('Could not determine GitHub repository info');
 
+  let targetWorkflowId = pipelineId;
+  try {
+    const { workflows } = await listWorkflows(
+      repoInfo.owner,
+      repoInfo.repo,
+      accessToken
+    );
+    if (workflows && workflows.length > 0) {
+      const match = workflows.find(
+        w =>
+          String(w.id) === pipelineId ||
+          w.name.toLowerCase() === pipelineId.toLowerCase() ||
+          w.path.endsWith(pipelineId) ||
+          w.path.split('/').pop() === pipelineId
+      );
+      if (match) {
+        targetWorkflowId = String(match.id);
+      }
+    }
+  } catch (err) {
+    // If listWorkflows lookup fails, fall back to passed pipelineId
+  }
+
   const result = active
     ? await enableWorkflow(
         repoInfo.owner,
         repoInfo.repo,
-        pipelineId,
+        targetWorkflowId,
         accessToken
       )
     : await disableWorkflow(
         repoInfo.owner,
         repoInfo.repo,
-        pipelineId,
+        targetWorkflowId,
         accessToken
       );
 

@@ -239,8 +239,8 @@ const run = async () => {
         });
       };
 
-      runPrisma('generate', [`--schema=${schemaPath}`]);
-      runPrisma('db', ['push', `--schema=${schemaPath}`, '--skip-generate']);
+      runPrisma('generate', [`--schema="${schemaPath}"`]);
+      runPrisma('db', ['push', `--schema="${schemaPath}"`, '--skip-generate']);
       console.log('[monodog] Database setup complete.');
     }
   } catch (err) {

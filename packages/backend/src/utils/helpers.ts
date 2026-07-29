@@ -110,7 +110,9 @@ async function storePackage(pkg: PackageInfo): Promise<void> {
         // Key Metrics and Relationships
         dependencies: JSON.stringify(pkg.dependencies), // The total number of direct dependencies (12 in your example)
         // Manual Serialization Required: Stores a JSON array string of maintainers, e.g., '["team-frontend"]'
-        maintainers: pkg.maintainers.join(','),
+        maintainers: Array.isArray(pkg.maintainers)
+          ? pkg.maintainers.join(',')
+          : '',
         // Manual Serialization Required: Stores a JSON array string of tags, e.g., '["core", "ui"]'
 
         // Manual Serialization Required: Stores the scripts object as a JSON string
