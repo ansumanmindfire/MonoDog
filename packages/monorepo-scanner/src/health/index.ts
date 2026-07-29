@@ -22,7 +22,8 @@ export async function checkBuildStatus(
       const cmds = getPMCommands(pm);
       await execAsync(cmds.runBuild, {
         cwd: pkg.path,
-        timeout: 30000,
+        maxBuffer: 10 * 1024 * 1024,
+        env: { ...process.env, CI: 'true', FORCE_COLOR: '0' },
       });
       return 'success';
     }
@@ -39,6 +40,7 @@ export async function checkTestCoverage(
   try {
     const coveragePaths = [
       path.join(pkg.path, 'coverage', 'coverage-summary.json'),
+      path.join(pkg.path, 'coverage', 'coverage-final.json'),
       path.join(pkg.path, 'coverage', 'lcov.info'),
       path.join(pkg.path, 'coverage', 'clover.xml'),
       path.join(pkg.path, 'coverage.json'),
@@ -50,32 +52,48 @@ export async function checkTestCoverage(
 
     for (const coveragePath of coveragePaths) {
       if (fs.existsSync(coveragePath)) {
-        if (coveragePath.endsWith('coverage-summary.json')) {
+        if (coveragePath.endsWith('coverage-summary.json') || coveragePath.endsWith('coverage.json')) {
           try {
             const coverage = JSON.parse(fs.readFileSync(coveragePath, 'utf8'));
-            return (
-              coverage.total?.lines?.pct || coverage.total?.statements?.pct || 0
-            );
+            const pct =
+              coverage.total?.lines?.pct ?? coverage.total?.statements?.pct;
+            if (typeof pct === 'number') {
+              return Math.round(pct);
+            }
           } catch (error) {
             console.warn(`Error parsing coverage file for ${pkg.name}:`, error);
           }
         }
-        return 50;
+
+        if (coveragePath.endsWith('coverage-final.json')) {
+          try {
+            const data = JSON.parse(fs.readFileSync(coveragePath, 'utf8'));
+            let totalStatements = 0;
+            let coveredStatements = 0;
+
+            for (const filePath of Object.keys(data)) {
+              const fileData = data[filePath];
+              if (fileData && fileData.s) {
+                for (const stmtId of Object.keys(fileData.s)) {
+                  totalStatements++;
+                  if (fileData.s[stmtId] > 0) {
+                    coveredStatements++;
+                  }
+                }
+              }
+            }
+
+            if (totalStatements > 0) {
+              return Math.round((coveredStatements / totalStatements) * 100);
+            }
+          } catch (error) {
+            console.warn(`Error parsing coverage-final.json for ${pkg.name}:`, error);
+          }
+        }
       }
     }
 
-    if (pkg.scripts && pkg.scripts.test) {
-      const hasCoverageSetup =
-        pkg.scripts.test.includes('--coverage') ||
-        pkg.scripts.test.includes('coverage') ||
-        (pkg.devDependencies &&
-          (pkg.devDependencies.jest ||
-            pkg.devDependencies.nyc ||
-            pkg.devDependencies['@types/jest']));
-
-      return hasCoverageSetup ? 30 : 0;
-    }
-
+    // If no coverage report file exists, return 0%
     return 0;
   } catch (error) {
     console.warn(`Error checking coverage for ${pkg.name}:`, error);
@@ -92,7 +110,8 @@ export async function checkLintStatus(
       const cmds = getPMCommands(pm);
       await execAsync(cmds.runLint, {
         cwd: pkg.path,
-        timeout: 10000,
+        maxBuffer: 10 * 1024 * 1024,
+        env: { ...process.env, CI: 'true', FORCE_COLOR: '0' },
       });
       return 'pass';
     }
@@ -103,17 +122,20 @@ export async function checkLintStatus(
 }
 
 export async function checkSecurityAudit(
-  pkg: PackageInfo
+  pkg: PackageInfo,
+  rootPath?: string
 ): Promise<PackageHealth['securityAudit']> {
   try {
     let stdoutData = '';
     const pm = detectPackageManager(pkg.path);
     const cmds = getPMCommands(pm);
+    const auditCwd = rootPath || pkg.path;
 
     try {
       const { stdout } = await execAsync(cmds.auditJson, {
-        cwd: pkg.path,
-        timeout: 60000,
+        cwd: auditCwd,
+        maxBuffer: 10 * 1024 * 1024,
+        env: { ...process.env, CI: 'true', FORCE_COLOR: '0' },
       });
       stdoutData = stdout;
     } catch (execError: any) {
@@ -130,18 +152,27 @@ export async function checkSecurityAudit(
 
     const audit = JSON.parse(stdoutData.toString());
 
-    // Check if metadata.vulnerabilities exists
-    if (audit && audit.metadata && audit.metadata.vulnerabilities) {
-      const vulns = audit.metadata.vulnerabilities;
+    const vulns = audit?.metadata?.vulnerabilities || audit?.vulnerabilities;
 
-      const totalVulns =
-        (vulns.low || 0) +
-        (vulns.moderate || 0) +
-        (vulns.high || 0) +
-        (vulns.critical || 0) +
-        (vulns.total || 0);
+    if (vulns) {
+      if (typeof vulns === 'object' && !Array.isArray(vulns)) {
+        const totalVulns =
+          (vulns.info || 0) +
+          (vulns.low || 0) +
+          (vulns.moderate || 0) +
+          (vulns.high || 0) +
+          (vulns.critical || 0) +
+          (vulns.total || 0);
 
-      return totalVulns === 0 ? 'pass' : 'fail';
+        const keysCount = audit?.vulnerabilities ? Object.keys(audit.vulnerabilities).length : 0;
+        const finalCount = totalVulns || keysCount;
+
+        return finalCount === 0 ? 'pass' : 'fail';
+      }
+
+      if (Array.isArray(vulns)) {
+        return vulns.length === 0 ? 'pass' : 'fail';
+      }
     }
 
     return 'unknown';
