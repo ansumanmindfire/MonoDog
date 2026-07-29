@@ -1,6 +1,4 @@
 import {
-  PlayIcon,
-  PauseIcon,
   Cog6ToothIcon,
   CheckCircleIcon,
   ExclamationTriangleIcon,
@@ -17,7 +15,6 @@ import {
 export default function PipelineStatus({
   pipelines,
   onPipelineSelect,
-  onPipelineToggle,
 }: PipelineStatusProps) {
   const getHealthIcon = (health: string) => {
     switch (health) {
@@ -110,35 +107,6 @@ export default function PipelineStatus({
                       </span>
                     </div>
                   </div>
-                </div>
-
-                <div className="flex items-center space-x-4">
-                  {/* Pipeline Toggle */}
-                  <button
-                    onClick={e => {
-                      e.stopPropagation();
-                      onPipelineToggle(
-                        pipeline.id,
-                        pipeline.status !== 'active'
-                      );
-                    }}
-                    className={`p-2 rounded-lg transition-colors ${
-                      pipeline.status === 'active'
-                        ? 'text-green-600 hover:bg-green-100'
-                        : 'text-gray-400 hover:bg-gray-100'
-                    }`}
-                    title={
-                      pipeline.status === 'active'
-                        ? 'Pause Pipeline'
-                        : 'Activate Pipeline'
-                    }
-                  >
-                    {pipeline.status === 'active' ? (
-                      <PauseIcon className="w-5 h-5" />
-                    ) : (
-                      <PlayIcon className="w-5 h-5" />
-                    )}
-                  </button>
                 </div>
               </div>
 

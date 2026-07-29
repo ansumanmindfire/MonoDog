@@ -14,6 +14,7 @@ vi.mock('../../src/services/health.service', () => ({
   getPackageHealthMetrics: vi.fn(),
   getAllPackagesHealthMetrics: vi.fn(),
   refreshPackagesHealth: vi.fn(),
+  triggerAsyncRefreshPackagesHealth: vi.fn(),
 }));
 
 describe('Health Controller Unit Tests', () => {
@@ -102,15 +103,23 @@ describe('Health Controller Unit Tests', () => {
     });
 
     it('refreshHealth should refresh metrics or 500', async () => {
-      vi.mocked(healthService.refreshPackagesHealth).mockResolvedValueOnce({
-        refreshed: 1,
-      } as any);
+      const mockJob = { refreshed: 1 };
+      vi.mocked(
+        healthService.triggerAsyncRefreshPackagesHealth
+      ).mockReturnValueOnce(mockJob as any);
       await refreshHealth(mockRequest, mockResponse);
-      expect(mockResponse.json).toHaveBeenCalledWith({ refreshed: 1 });
+      expect(mockResponse.status).toHaveBeenCalledWith(202);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        success: true,
+        message: 'Health refresh scan started in background',
+        job: mockJob,
+      });
 
-      vi.mocked(healthService.refreshPackagesHealth).mockRejectedValueOnce(
-        new Error('Scan error')
-      );
+      vi.mocked(
+        healthService.triggerAsyncRefreshPackagesHealth
+      ).mockImplementationOnce(() => {
+        throw new Error('Scan error');
+      });
       await refreshHealth(mockRequest, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(500);
     });
