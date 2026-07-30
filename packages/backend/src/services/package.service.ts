@@ -43,7 +43,11 @@ export const getAllPackages = async (rootPath?: string) => {
       for (const pkg of packages) {
         try {
           await storePackage(pkg);
-        } catch {}
+        } catch (err) {
+          AppLogger.warn(
+            `Failed to store package ${pkg?.name || 'unknown'}: ${err instanceof Error ? err.message : String(err)}`
+          );
+        }
       }
     } catch (err) {
       AppLogger.error('Error syncing monorepo packages:', err as Error);
@@ -75,7 +79,11 @@ export const getPackagesService = async (rootPath: string) => {
       for (const pkg of packages) {
         try {
           await storePackage(pkg);
-        } catch {}
+        } catch (err) {
+          AppLogger.warn(
+            `Failed to store package ${pkg?.name || 'unknown'}: ${err instanceof Error ? err.message : String(err)}`
+          );
+        }
       }
       dbPackages = await PackageRepository.findAll();
     } catch (error) {

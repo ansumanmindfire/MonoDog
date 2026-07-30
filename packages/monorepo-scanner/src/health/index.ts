@@ -135,11 +135,12 @@ export async function checkSecurityAudit(
     let stdoutData = '';
     const pm = detectPackageManager(pkg.path);
     const cmds = getPMCommands(pm);
-    const auditCwd = rootPath || pkg.path;
+    const targetRoot =
+      rootPath || process.env.MONODOG_TARGET_ROOT || process.cwd();
 
     try {
       const { stdout } = await execAsync(cmds.auditJson, {
-        cwd: auditCwd,
+        cwd: targetRoot,
         maxBuffer: 10 * 1024 * 1024,
         env: { ...process.env, CI: 'true', FORCE_COLOR: '0' },
       });
@@ -158,32 +159,89 @@ export async function checkSecurityAudit(
 
     const audit = JSON.parse(stdoutData.toString());
 
-    const vulns = audit?.metadata?.vulnerabilities || audit?.vulnerabilities;
+    // Calculate relative path of this package from workspace root
+    let relativePkgPath = path
+      .relative(targetRoot, pkg.path)
+      .replace(/\\/g, '/');
+    if (!relativePkgPath || relativePkgPath === '.') {
+      relativePkgPath = '.';
+    }
 
-    if (vulns) {
-      if (typeof vulns === 'object' && !Array.isArray(vulns)) {
-        const totalVulns =
-          (vulns.info || 0) +
-          (vulns.low || 0) +
-          (vulns.moderate || 0) +
-          (vulns.high || 0) +
-          (vulns.critical || 0) +
-          (vulns.total || 0);
+    const pathPrefixPattern1 = relativePkgPath.toLowerCase();
+    const pathPrefixPattern2 = relativePkgPath
+      .replace(/\//g, '__')
+      .toLowerCase();
+    const pkgNamePattern = (pkg.name || '').toLowerCase();
 
-        const keysCount = audit?.vulnerabilities
-          ? Object.keys(audit.vulnerabilities).length
-          : 0;
-        const finalCount = totalVulns || keysCount;
+    let matchingPackageVulnerabilities = 0;
 
-        return finalCount === 0 ? 'pass' : 'fail';
-      }
-
-      if (Array.isArray(vulns)) {
-        return vulns.length === 0 ? 'pass' : 'fail';
+    // Check "actions" array format -- Pnpm
+    if (Array.isArray(audit?.actions)) {
+      for (const act of audit.actions) {
+        if (Array.isArray(act.resolves)) {
+          for (const res of act.resolves) {
+            if (res.path) {
+              const resPathLower = String(res.path).toLowerCase();
+              if (
+                resPathLower.startsWith(pathPrefixPattern1) ||
+                resPathLower.startsWith(pathPrefixPattern2) ||
+                (pkgNamePattern && resPathLower.startsWith(pkgNamePattern))
+              ) {
+                matchingPackageVulnerabilities++;
+              }
+            }
+          }
+        }
       }
     }
 
-    return 'unknown';
+    // Check advisories / vulnerabilities format -- Bun / NPM / Yarn
+    const advisories = audit?.advisories || audit?.vulnerabilities;
+    if (advisories && typeof advisories === 'object') {
+      for (const key of Object.keys(advisories)) {
+        const item = advisories[key];
+        const findings = item?.findings || item?.via;
+        if (Array.isArray(findings)) {
+          for (const f of findings) {
+            const nodes =
+              f?.nodes || f?.paths || (typeof f === 'string' ? [f] : []);
+            if (Array.isArray(nodes)) {
+              for (const node of nodes) {
+                const nodeStr = String(node).toLowerCase();
+                if (
+                  nodeStr.startsWith(pathPrefixPattern1) ||
+                  nodeStr.startsWith(pathPrefixPattern2) ||
+                  (pkgNamePattern && nodeStr.startsWith(pkgNamePattern))
+                ) {
+                  matchingPackageVulnerabilities++;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    // If audit JSON has no path breakdown keys, fall back to global metadata
+    if (
+      !audit.actions &&
+      !audit.advisories &&
+      !audit.vulnerabilities &&
+      audit.metadata?.vulnerabilities
+    ) {
+      const vulns = audit.metadata.vulnerabilities;
+      const totalVulns =
+        (vulns.info || 0) +
+        (vulns.low || 0) +
+        (vulns.moderate || 0) +
+        (vulns.high || 0) +
+        (vulns.critical || 0) +
+        (vulns.total || 0);
+
+      return totalVulns === 0 ? 'pass' : 'fail';
+    }
+
+    return matchingPackageVulnerabilities === 0 ? 'pass' : 'fail';
   } catch (error) {
     return 'unknown';
   }
