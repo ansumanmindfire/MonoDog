@@ -227,7 +227,8 @@ export const updatePackageConfig = async (
     newConfig = JSON.parse(config);
   } catch (error) {
     throw new Error(
-      `JSON parsing error: ${error instanceof Error ? error.message : 'Invalid format'
+      `JSON parsing error: ${
+        error instanceof Error ? error.message : 'Invalid format'
       }`
     );
   }
@@ -250,7 +251,8 @@ export const updatePackageConfig = async (
     existingConfig = JSON.parse(existingContent);
   } catch (error) {
     throw new Error(
-      `Error parsing existing package.json: ${error instanceof Error ? error.message : 'Invalid JSON'
+      `Error parsing existing package.json: ${
+        error instanceof Error ? error.message : 'Invalid JSON'
       }`
     );
   }
