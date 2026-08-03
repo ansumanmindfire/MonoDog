@@ -87,7 +87,8 @@ export default function PackageDetailHeader({
                 </div>
 
                 <div className="flex items-center space-x-1">
-                  {(packageData as any).publishStatus === 'published' || (packageData as any).isPublished ? (
+                  {(packageData as any).publishStatus === 'published' ||
+                  (packageData as any).isPublished ? (
                     <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300">
                       Published
                     </span>

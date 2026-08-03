@@ -94,7 +94,8 @@ export default function PackagesTable({
                           >
                             {pkg.name}
                           </Link>
-                          {pkg.publishStatus === 'published' || pkg.isPublished ? (
+                          {pkg.publishStatus === 'published' ||
+                          pkg.isPublished ? (
                             <span className="inline-flex px-2 py-0.5 text-xs font-semibold rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300">
                               Published
                             </span>
@@ -133,40 +134,44 @@ export default function PackagesTable({
                       {displayStatus}
                     </span>
                   </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {Object.keys(pkg.dependencies).length > 0 && (
-                    <div className="text-xs text-gray-500 mt-1">
-                      {Object.keys(pkg.dependencies).slice(0, 3).join(', ')}
-                      {Object.keys(pkg.dependencies).length > 3 &&
-                        ` +${Object.keys(pkg.dependencies).length - 3} more`}
-                    </div>
-                  )}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="flex -space-x-1">
-                    {Array.isArray(pkg.maintainers) &&
-                      pkg.maintainers.slice(0, 3).map((maintainer, index) => {
-                        const nameStr = typeof maintainer === 'string' ? maintainer : (maintainer as any)?.name || 'M';
-                        return (
-                          <div
-                            key={`${nameStr}-${index}`}
-                            className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-gray-500 text-xs font-medium text-white"
-                            title={nameStr}
-                          >
-                            {nameStr.charAt(0).toUpperCase()}
-                          </div>
-                        );
-                      })}
-                    {Array.isArray(pkg.maintainers) && pkg.maintainers.length > 3 && (
-                      <div className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-gray-300 text-xs font-medium text-gray-600">
-                        +{pkg.maintainers.length - 3}
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {Object.keys(pkg.dependencies).length > 0 && (
+                      <div className="text-xs text-gray-500 mt-1">
+                        {Object.keys(pkg.dependencies).slice(0, 3).join(', ')}
+                        {Object.keys(pkg.dependencies).length > 3 &&
+                          ` +${Object.keys(pkg.dependencies).length - 3} more`}
                       </div>
                     )}
-                  </div>
-                </td>
-              </tr>
-            );
-          })}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex -space-x-1">
+                      {Array.isArray(pkg.maintainers) &&
+                        pkg.maintainers.slice(0, 3).map((maintainer, index) => {
+                          const nameStr =
+                            typeof maintainer === 'string'
+                              ? maintainer
+                              : (maintainer as any)?.name || 'M';
+                          return (
+                            <div
+                              key={`${nameStr}-${index}`}
+                              className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-gray-500 text-xs font-medium text-white"
+                              title={nameStr}
+                            >
+                              {nameStr.charAt(0).toUpperCase()}
+                            </div>
+                          );
+                        })}
+                      {Array.isArray(pkg.maintainers) &&
+                        pkg.maintainers.length > 3 && (
+                          <div className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-gray-300 text-xs font-medium text-gray-600">
+                            +{pkg.maintainers.length - 3}
+                          </div>
+                        )}
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

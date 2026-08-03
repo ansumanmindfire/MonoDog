@@ -7,7 +7,10 @@ import { MonorepoScanner } from '@mindfiredigital/monorepo-scanner';
 import { PackageRepository } from '../repositories';
 import { AppLogger } from '../middleware';
 import type { PackageModel } from '../types/database';
-import { getPackageBumpTypes, checkVersionAvailableOnNpm } from './changeset-service';
+import {
+  getPackageBumpTypes,
+  checkVersionAvailableOnNpm,
+} from './changeset-service';
 
 export const transformPackage = (pkg: any) => {
   const rawHealth = pkg.packageHealth || pkg.health;
@@ -19,7 +22,7 @@ export const transformPackage = (pkg: any) => {
   const hasScan = typeof overallScore === 'number';
 
   const isHealthy: boolean | null = hasScan
-    ? rawHealth?.isHealthy ?? overallScore! >= 70
+    ? (rawHealth?.isHealthy ?? overallScore! >= 70)
     : null;
 
   const status =
@@ -42,11 +45,18 @@ export const transformPackage = (pkg: any) => {
   const healthObj = {
     overallScore,
     isHealthy,
-    buildStatus: rawHealth?.packageBuildStatus || rawHealth?.buildStatus || 'unknown',
-    coverageScore: rawHealth?.packageTestCoverage ?? rawHealth?.coverageScore ?? 0,
-    lintScore: rawHealth?.packageLintStatus || rawHealth?.lintScore || 'unknown',
-    securityScore: rawHealth?.packageSecurity || rawHealth?.securityScore || 'unknown',
-    dependenciesScore: rawHealth?.packageDependencies || rawHealth?.dependenciesScore || 'unknown',
+    buildStatus:
+      rawHealth?.packageBuildStatus || rawHealth?.buildStatus || 'unknown',
+    coverageScore:
+      rawHealth?.packageTestCoverage ?? rawHealth?.coverageScore ?? 0,
+    lintScore:
+      rawHealth?.packageLintStatus || rawHealth?.lintScore || 'unknown',
+    securityScore:
+      rawHealth?.packageSecurity || rawHealth?.securityScore || 'unknown',
+    dependenciesScore:
+      rawHealth?.packageDependencies ||
+      rawHealth?.dependenciesScore ||
+      'unknown',
   };
 
   return {
@@ -191,7 +201,9 @@ export const getPackagesService = async (rootPath: string) => {
     }
   }
 
-  const transformedPackages = dbPackages.map((pkg: any) => transformPackage(pkg));
+  const transformedPackages = dbPackages.map((pkg: any) =>
+    transformPackage(pkg)
+  );
 
   const bumpTypes = await getPackageBumpTypes(rootPath);
 

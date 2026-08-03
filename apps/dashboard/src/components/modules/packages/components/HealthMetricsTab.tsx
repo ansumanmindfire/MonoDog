@@ -65,15 +65,26 @@ export default function HealthMetricsTab({
     }
   };
   const score = packageData.health?.overallScore;
-  const buildStatus = packageData.health?.buildStatus || packageData.packageHealth?.buildStatus || 'unknown';
-  const coverageScore = packageData.health?.coverageScore ?? packageData.packageHealth?.testCoverage ?? 0;
-  const lintStatus = packageData.health?.lintScore || packageData.packageHealth?.lintStatus || 'unknown';
+  const buildStatus =
+    packageData.health?.buildStatus ||
+    packageData.packageHealth?.buildStatus ||
+    'unknown';
+  const coverageScore =
+    packageData.health?.coverageScore ??
+    packageData.packageHealth?.testCoverage ??
+    0;
+  const lintStatus =
+    packageData.health?.lintScore ||
+    packageData.packageHealth?.lintStatus ||
+    'unknown';
 
   if (typeof score !== 'number') {
     return (
       <div className="py-6">
         <div className="bg-gray-50 border rounded-lg p-6 text-center">
-          <h3 className="text-lg font-medium text-gray-700 mb-2">Not Audited</h3>
+          <h3 className="text-lg font-medium text-gray-700 mb-2">
+            Not Audited
+          </h3>
           <p className="text-sm text-gray-500">
             Health score has not been calculated for this package yet.
           </p>
@@ -87,9 +98,7 @@ export default function HealthMetricsTab({
       <div className="bg-white border rounded-lg p-6 mb-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-medium text-gray-900">Health Score</h3>
-          <div
-            className={`text-3xl font-bold ${getHealthScoreColor(score)}`}
-          >
+          <div className={`text-3xl font-bold ${getHealthScoreColor(score)}`}>
             {score}%
           </div>
         </div>
@@ -110,13 +119,9 @@ export default function HealthMetricsTab({
         </div>
 
         <p className="text-sm text-gray-600">
-          {score >= 70 &&
-            'Excellent health - package is in great condition'}
-          {score >= 50 &&
-            score < 70 &&
-            'Good health - minor issues detected'}
-          {score < 50 &&
-            'Needs attention - several issues require fixing'}
+          {score >= 70 && 'Excellent health - package is in great condition'}
+          {score >= 50 && score < 70 && 'Good health - minor issues detected'}
+          {score < 50 && 'Needs attention - several issues require fixing'}
         </p>
       </div>
 

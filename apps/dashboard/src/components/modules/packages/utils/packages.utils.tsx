@@ -26,7 +26,8 @@ export const calculatePackageStats = (packages: Package[]): PackageStats => {
   return {
     total: packages.length,
     healthy: packages.filter(p => resolvePackageStatus(p) === 'healthy').length,
-    warnings: packages.filter(p => resolvePackageStatus(p) === 'warning').length,
+    warnings: packages.filter(p => resolvePackageStatus(p) === 'warning')
+      .length,
     errors: packages.filter(p => resolvePackageStatus(p) === 'error').length,
   };
 };
